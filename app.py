@@ -10,139 +10,187 @@ import re
 st.set_page_config(page_title="Borsa Asistanım", page_icon="📊", layout="wide")
 
 # ============================================
-# MODERN TASARIM - CSS
+# TRADINGVIEW TARZI KOYU TEMA
 # ============================================
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
     
-    html, body, [class*="css"] {
+    * {
         font-family: 'Inter', sans-serif;
     }
     
+    /* Ana arka plan - TradingView koyu gri */
     .stApp {
-        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        background: #131722;
     }
     
     .main .block-container {
-        padding: 2rem 3rem;
-        max-width: 1400px;
+        padding: 1.5rem 2rem;
+        max-width: 1500px;
     }
     
-    .modern-card {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 16px;
-        padding: 20px;
-        margin: 10px 0;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    /* Üst bar */
+    .top-bar {
+        background: #1e222d;
+        border-bottom: 1px solid #2a2e39;
+        padding: 10px 0;
+        margin-bottom: 15px;
     }
     
-    .lider-panel {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 16px;
-        padding: 16px 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+    /* LIDER paneli - canlı renk */
+    .tv-panel {
+        background: #1e222d;
+        border: 1px solid #2a2e39;
+        border-radius: 6px;
+        padding: 12px 16px;
+        margin-bottom: 12px;
     }
     
-    .lider-panel.panik {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    .tv-panel.panik {
+        border-left: 3px solid #f23645;
+        background: #1a1015;
     }
     
-    .lider-panel.zarar {
-        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-        color: #333 !important;
+    .tv-panel.zarar {
+        border-left: 3px solid #ff9800;
+        background: #1a1510;
     }
     
-    .lider-panel.kar {
-        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-        color: #333 !important;
+    .tv-panel.kar {
+        border-left: 3px solid #22ab94;
+        background: #101a17;
     }
     
-    .metric-card {
-        background: rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(5px);
-        border-radius: 12px;
-        padding: 16px;
+    /* Metrik kartı */
+    .tv-metric {
+        background: #1e222d;
+        border: 1px solid #2a2e39;
+        border-radius: 6px;
+        padding: 12px;
         text-align: center;
-        border: 1px solid rgba(255, 255, 255, 0.1);
     }
     
-    .metric-card h3 {
-        font-size: 1.8rem;
-        font-weight: 700;
-        margin: 8px 0;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    
-    .metric-card small {
-        color: #a0a0b0;
-        font-size: 0.8rem;
+    .tv-metric .label {
+        color: #787b86;
+        font-size: 11px;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
     }
     
+    .tv-metric .value {
+        color: #d1d4dc;
+        font-size: 20px;
+        font-weight: 700;
+    }
+    
+    .tv-metric .value.red { color: #f23645; }
+    .tv-metric .value.green { color: #22ab94; }
+    .tv-metric .value.orange { color: #ff9800; }
+    
+    /* Butonlar */
     .stButton > button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        background: #2962ff !important;
         color: white !important;
         border: none !important;
-        border-radius: 10px !important;
-        padding: 10px 20px !important;
-        font-weight: 600 !important;
-        letter-spacing: 0.5px !important;
-        transition: all 0.3s !important;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+        border-radius: 4px !important;
+        padding: 8px 16px !important;
+        font-weight: 500 !important;
+        font-size: 13px !important;
+        letter-spacing: 0.3px !important;
+        transition: background 0.2s !important;
     }
     
     .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5) !important;
+        background: #1e4bd8 !important;
     }
     
+    /* Tablo */
     .stDataFrame {
-        background: rgba(255, 255, 255, 0.03) !important;
-        border-radius: 12px !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        background: #1e222d !important;
+        border: 1px solid #2a2e39 !important;
+        border-radius: 4px !important;
     }
     
+    .stDataFrame th {
+        background: #2a2e39 !important;
+        color: #787b86 !important;
+        font-size: 11px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        padding: 8px 12px !important;
+    }
+    
+    .stDataFrame td {
+        color: #d1d4dc !important;
+        font-size: 13px !important;
+        padding: 6px 12px !important;
+        border-bottom: 1px solid #2a2e39 !important;
+    }
+    
+    /* Başlıklar */
     h1 {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 800 !important;
-        font-size: 2.5rem !important;
+        color: #d1d4dc !important;
+        font-weight: 700 !important;
+        font-size: 1.8rem !important;
     }
     
     h2, h3 {
-        color: #e0e0f0 !important;
+        color: #d1d4dc !important;
         font-weight: 600 !important;
+        font-size: 14px !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 12px !important;
     }
     
+    /* Text */
+    p, span, div {
+        color: #d1d4dc;
+    }
+    
+    .caption {
+        color: #787b86 !important;
+        font-size: 12px;
+    }
+    
+    /* Code block */
+    .stCodeBlock {
+        background: #1e222d !important;
+        border: 1px solid #2a2e39 !important;
+        border-radius: 4px !important;
+    }
+    
+    code {
+        color: #22ab94 !important;
+    }
+    
+    /* Divider */
     hr {
-        border-color: rgba(255, 255, 255, 0.1) !important;
+        border-color: #2a2e39 !important;
+        margin: 15px 0 !important;
     }
     
-    ::-webkit-scrollbar {
-        width: 8px;
+    /* Progress bar */
+    .stProgress > div > div {
+        background: #2962ff !important;
     }
     
-    ::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.05);
-    }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #131722; }
+    ::-webkit-scrollbar-thumb { background: #2a2e39; border-radius: 3px; }
     
-    ::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        border-radius: 10px;
+    /* Spinner */
+    .stSpinner > div {
+        border-color: #2962ff !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # ============================================
-# LIDER MİNİ PANEL
+# LIDER PANEL
 # ============================================
 try:
     lider = yf.Ticker("LIDER.IS")
@@ -160,49 +208,56 @@ panik = maliyet * 0.90
 hedef = maliyet * 1.10
 
 panel_class = "panik" if lider_fiyat <= panik else "zarar" if lider_fiyat < maliyet else "kar"
-panel_emoji = "🔴" if lider_fiyat <= panik else "🟡" if lider_fiyat < maliyet else "🟢"
+panel_renk = "#f23645" if lider_fiyat <= panik else "#ff9800" if lider_fiyat < maliyet else "#22ab94"
+panel_emoji = "🔴" if lider_fiyat <= panik else "🟠" if lider_fiyat < maliyet else "🟢"
 
 st.markdown(f"""
-<div class="lider-panel {panel_class}">
-    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-        <div>
-            <div style="font-size: 0.8rem; opacity: 0.8; letter-spacing: 1px;">{panel_emoji} LIDER TAKİP</div>
-            <div style="font-size: 2rem; font-weight: 700;">{lider_fiyat:.2f} <span style="font-size: 1rem;">TL</span></div>
+<div class="tv-panel {panel_class}">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 14px; font-weight: 600; color: #d1d4dc;">{panel_emoji} LIDER</span>
+            <span style="font-size: 22px; font-weight: 700; color: {panel_renk};">{lider_fiyat:.2f}</span>
+            <span style="color: #787b86; font-size: 12px;">TRY</span>
         </div>
-        <div style="text-align: right;">
-            <div style="font-size: 0.8rem; opacity: 0.8;">Maliyet: {maliyet:.2f} TL</div>
-            <div style="font-size: 1.2rem; font-weight: 600;">Zarar: {zarar:,.0f} TL (%{zarar_yuzde:.1f})</div>
-        </div>
-        <div style="text-align: center;">
-            <div style="font-size: 0.7rem; opacity: 0.7;">PANİK</div>
-            <div style="font-weight: 600;">{panik:.2f}</div>
-        </div>
-        <div style="text-align: center;">
-            <div style="font-size: 0.7rem; opacity: 0.7;">HEDEF</div>
-            <div style="font-weight: 600;">{hedef:.2f}</div>
+        <div style="display: flex; gap: 25px;">
+            <div>
+                <div style="color: #787b86; font-size: 10px;">MALİYET</div>
+                <div style="color: #d1d4dc; font-weight: 500;">{maliyet:.2f}</div>
+            </div>
+            <div>
+                <div style="color: #787b86; font-size: 10px;">ZARAR</div>
+                <div style="color: #f23645; font-weight: 600;">{zarar:,.0f} TL (%{zarar_yuzde:.1f})</div>
+            </div>
+            <div>
+                <div style="color: #787b86; font-size: 10px;">PANİK</div>
+                <div style="color: #ff9800; font-weight: 500;">{panik:.2f}</div>
+            </div>
+            <div>
+                <div style="color: #787b86; font-size: 10px;">HEDEF</div>
+                <div style="color: #22ab94; font-weight: 500;">{hedef:.2f}</div>
+            </div>
         </div>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
+# Kopyala butonu
 lider_veri = f"LIDER: {lider_fiyat:.2f} TL | Maliyet: {maliyet} | Zarar: {zarar:,.0f} TL (%{zarar_yuzde:.1f})"
 st.components.v1.html(f"""
-    <textarea id="liderMini" style="display:none;">{lider_veri}</textarea>
-    <button onclick="
-        var t = document.getElementById('liderMini');
-        t.style.display='block'; t.select();
-        navigator.clipboard.writeText(t.value);
-        t.style.display='none';
-    " style="padding:6px 12px; background:#2a5298; color:white; border:none; border-radius:5px; cursor:pointer; font-size:12px;">
-    📋 LIDER Kopyala</button>
-""", height=35)
-
-st.title("📊 Borsa Asistanım")
-st.caption(f"Son güncelleme: {datetime.now().strftime('%d.%m.%Y %H:%M')}")
-st.markdown("---")
+    <div style="margin-bottom: 15px;">
+        <textarea id="liderMini" style="display:none;">{lider_veri}</textarea>
+        <button onclick="
+            var t = document.getElementById('liderMini');
+            t.style.display='block'; t.select();
+            navigator.clipboard.writeText(t.value);
+            t.style.display='none';
+        " style="padding:6px 14px; background:#1e222d; color:#787b86; border:1px solid #2a2e39; border-radius:4px; cursor:pointer; font-size:11px;">
+        📋 KOPYALA</button>
+    </div>
+""", height=30)
 
 # ============================================
-# VERİ ÇEKME FONKSİYONLARI
+# VERİ ÇEKME
 # ============================================
 @st.cache_data(ttl=3600)
 def veri_cek():
@@ -234,13 +289,55 @@ altin_manual = 6170
 faiz_manual = 37.0
 
 # ============================================
+# ÜST BAR - PİYASA ÖZETİ
+# ============================================
+col1, col2, col3, col4, col5 = st.columns(5)
+with col1:
+    st.markdown(f"""
+    <div class="tv-metric">
+        <div class="label">BIST 100</div>
+        <div class="value">{v['bist']:,}</div>
+    </div>
+    """, unsafe_allow_html=True)
+with col2:
+    st.markdown(f"""
+    <div class="tv-metric">
+        <div class="label">USD/TRY</div>
+        <div class="value">{v['usd']:.2f}</div>
+    </div>
+    """, unsafe_allow_html=True)
+with col3:
+    st.markdown(f"""
+    <div class="tv-metric">
+        <div class="label">GRAM ALTIN</div>
+        <div class="value">{altin_manual:,}</div>
+    </div>
+    """, unsafe_allow_html=True)
+with col4:
+    st.markdown(f"""
+    <div class="tv-metric">
+        <div class="label">FAİZ</div>
+        <div class="value">%{faiz_manual:.1f}</div>
+    </div>
+    """, unsafe_allow_html=True)
+with col5:
+    st.markdown(f"""
+    <div class="tv-metric">
+        <div class="label">SON GÜNCELLEME</div>
+        <div class="value" style="font-size:12px;">{datetime.now().strftime('%H:%M')}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("<hr>", unsafe_allow_html=True)
+
+# ============================================
 # ÜÇ SÜTUN
 # ============================================
-sol, orta, sag = st.columns([1, 1, 1])
+sol, orta, sag = st.columns([1, 1.2, 1])
 
 # --- SOL: DeepSeek ---
 with sol:
-    st.subheader("🤖 DeepSeek")
+    st.markdown('<h3>🤖 DEEPSEEK ANALİZ</h3>', unsafe_allow_html=True)
     
     deepseek_metni = f"""BIST: {v['bist']:,.0f} | USD: {v['usd']:.2f} | Altın: {altin_manual:,.0f} | Faiz: %{faiz_manual:.1f}
 ASELSAN: {v['aselsan']:.2f} | AKBNK: {v['akbnk']:.2f} | GARAN: {v['garan']:.2f} | ISCTR: {v['isctr']:.2f}
@@ -255,24 +352,39 @@ THYAO: {v['thy']:.2f} | YKBNK: {v['ykbnk']:.2f} | SISE: {v['sise']:.2f} | TTKOM:
             t.style.display='block'; t.select();
             navigator.clipboard.writeText(t.value);
             t.style.display='none';
-        " style="width:100%; padding:10px; background:#2a5298; color:white; border:none; border-radius:8px; font-size:14px; font-weight:bold; cursor:pointer;">
-        📋 Panoya Kopyala</button>
-    """, height=50)
+        " style="width:100%; padding:8px; background:#2962ff; color:white; border:none; border-radius:4px; font-size:12px; font-weight:500; cursor:pointer;">
+        📋 PANOYA KOPYALA</button>
+    """, height=40)
     
     st.caption("👆 DeepSeek sohbetine yapıştır")
-    st.markdown("---")
-    st.subheader("📈 Piyasa")
-    c1, c2 = st.columns(2)
-    c1.metric("BIST", f"{v['bist']:,.0f}")
-    c2.metric("USD", f"{v['usd']:.2f}")
-    c1.metric("Altın", f"{altin_manual:,.0f}")
-    c2.metric("Faiz", f"%{faiz_manual:.1f}")
+    
+    st.markdown("<hr>", unsafe_allow_html=True)
+    st.markdown('<h3>📈 TAKİP LİSTESİ</h3>', unsafe_allow_html=True)
+    
+    takip = [
+        ("GARAN", v['garan'], "4.46", "1.10"),
+        ("ISCTR", v['isctr'], "4.16", "0.75"),
+        ("AKBNK", v['akbnk'], "5.48", "1.13"),
+        ("SISE", v['sise'], "11.15", "0.31"),
+        ("TTKOM", v['ttkom'], "6.91", "0.76"),
+    ]
+    
+    for hisse, fiyat, fk, pddd in takip:
+        renk = "#22ab94" if fiyat > 0 else "#f23645"
+        st.markdown(f"""
+        <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #2a2e39;">
+            <span style="color: #d1d4dc; font-weight: 500;">{hisse}</span>
+            <span style="color: {renk};">{fiyat:.2f}</span>
+            <span style="color: #787b86; font-size: 11px;">F/K:{fk}</span>
+            <span style="color: #787b86; font-size: 11px;">PD/DD:{pddd}</span>
+        </div>
+        """, unsafe_allow_html=True)
 
 # --- ORTA: BIST 100 ---
 with orta:
-    st.subheader("🔍 BIST 100 Tarama")
+    st.markdown('<h3>🔍 BIST 100 TARAMA</h3>', unsafe_allow_html=True)
     
-    if st.button("BIST 100 Çek", use_container_width=True):
+    if st.button("📡 BIST 100 VERİLERİNİ ÇEK", use_container_width=True):
         with st.spinner("Taranıyor..."):
             bist100 = {
                 "AEFES": "AEFES.IS", "AGHOL": "AGHOL.IS", "AKBNK": "AKBNK.IS",
@@ -325,11 +437,10 @@ with orta:
                 progress.progress((i + 1) / toplam)
             
             progress.empty()
-            st.success(f"✅ {len(sonuclar)} hisse")
+            st.success(f"✅ {len(sonuclar)} hisse tarandı")
             st.dataframe(pd.DataFrame(sonuclar), use_container_width=True, hide_index=True)
 
-            # DeepSeek için BIST 100
-            st.markdown("---")
+            st.markdown("<hr>", unsafe_allow_html=True)
             bist_deepseek = "BIST 100 TARAMA:\n"
             for _, row in pd.DataFrame(sonuclar).iterrows():
                 bist_deepseek += f"{row['Hisse']}: {row['Fiyat']:.2f} TL | F/K: {row['F/K']} | PD/DD: {row['PD/DD']}\n"
@@ -341,13 +452,13 @@ with orta:
                     t.style.display='block'; t.select();
                     navigator.clipboard.writeText(t.value);
                     t.style.display='none';
-                " style="width:100%; padding:8px; background:#dc3545; color:white; border:none; border-radius:5px; font-size:13px; font-weight:bold; cursor:pointer;">
-                📋 BIST 100 Kopyala</button>
-            """, height=45)
+                " style="width:100%; padding:8px; background:#1e222d; color:#787b86; border:1px solid #2a2e39; border-radius:4px; font-size:11px; cursor:pointer;">
+                📋 BIST 100 VERİSİNİ KOPYALA</button>
+            """, height=40)
 
 # --- SAĞ: Portföy ---
 with sag:
-    st.subheader("💼 Portföyüm")
+    st.markdown('<h3>💼 PORTFÖYÜM</h3>', unsafe_allow_html=True)
     
     portfoy = [
         {"Ad": "PPF", "Lot": 12000, "Alış": 1.00, "Güncel": 1.00},
@@ -373,19 +484,34 @@ with sag:
         p["K/Z %"] = (p["K/Z"] / p["Maliyet"]) * 100
         toplam += p["Değer"]
     
-    c1, c2 = st.columns(2)
-    c1.metric("Değer", f"{toplam:,.0f} TL")
-    c2.metric("Getiri", f"%{((toplam-40000)/40000)*100:.1f}")
+    kar_zarar_toplam = toplam - 40000
+    getiri = ((toplam - 40000) / 40000) * 100
+    renk = "#22ab94" if kar_zarar_toplam >= 0 else "#f23645"
     
-    st.dataframe(pd.DataFrame(portfoy)[["Ad", "Lot", "Alış", "Değer", "K/Z %"]], use_container_width=True, hide_index=True)
+    st.markdown(f"""
+    <div class="tv-panel" style="text-align: center;">
+        <div class="label">TOPLAM DEĞER</div>
+        <div style="font-size: 28px; font-weight: 700; color: #d1d4dc;">{toplam:,.0f} <span style="font-size:14px;">TL</span></div>
+        <div style="font-size: 14px; color: {renk}; margin-top: 4px;">{kar_zarar_toplam:+,.0f} TL (%{getiri:+.1f})</div>
+    </div>
+    """, unsafe_allow_html=True)
     
-    st.markdown("---")
-    st.subheader("📈 Hisseler")
-    c1, c2 = st.columns(2)
-    c1.metric("GARAN", f"{v['garan']:.2f}")
-    c2.metric("ISCTR", f"{v['isctr']:.2f}")
-    c1.metric("SISE", f"{v['sise']:.2f}")
-    c2.metric("TTKOM", f"{v['ttkom']:.2f}")
+    st.markdown("<hr>", unsafe_allow_html=True)
+    
+    for p in portfoy:
+        kz_renk = "#22ab94" if p['K/Z'] >= 0 else "#f23645"
+        st.markdown(f"""
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #2a2e39;">
+            <div>
+                <div style="color: #d1d4dc; font-weight: 500;">{p['Ad']}</div>
+                <div style="color: #787b86; font-size: 11px;">{p['Lot']} lot</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="color: #d1d4dc;">{p['Değer']:,.0f} TL</div>
+                <div style="color: {kz_renk}; font-size: 12px;">%{p['K/Z %']:+.1f}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-st.markdown("---")
+st.markdown("<hr>", unsafe_allow_html=True)
 st.caption("⚠️ Yatırım tavsiyesi değildir. Veri: Yahoo Finance")

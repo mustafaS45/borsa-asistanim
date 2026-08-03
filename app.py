@@ -10,38 +10,60 @@ st.title("📊 Borsa Asistanım")
 st.caption(f"Son güncelleme: {datetime.now().strftime('%d.%m.%Y %H:%M')}")
 
 # ------------------------------------------------------------
-# 1. PİYASA VERİLERİNİ ÇEK
+# VERİ ÇEKME
 # ------------------------------------------------------------
 @st.cache_data(ttl=3600)
 def veri_cek():
     v = {}
-    try:
-        v['bist'] = round(yf.Ticker("XU100.IS").history(period="1d")['Close'].iloc[-1], 0)
-    except: v['bist'] = 13411
-    try:
-        v['usd'] = round(yf.Ticker("USDTRY=X").history(period="1d")['Close'].iloc[-1], 2)
-    except: v['usd'] = 47.53
-    try:
-        v['altin'] = 6170  # Manuel güncel değer
-    except: v['altin'] = 6170
-    try:
-        v['aselsan'] = round(yf.Ticker("ASELS.IS").history(period="1d")['Close'].iloc[-1], 2)
-    except: v['aselsan'] = 336.25
-    try:
-        v['akbnk'] = round(yf.Ticker("AKBNK.IS").history(period="1d")['Close'].iloc[-1], 2)
-    except: v['akbnk'] = 66.00
-    try:
-        v['ykbnk'] = round(yf.Ticker("YKBNK.IS").history(period="1d")['Close'].iloc[-1], 2)
-    except: v['ykbnk'] = 34.00
-    try:
-        v['thy'] = round(yf.Ticker("THYAO.IS").history(period="1d")['Close'].iloc[-1], 2)
-    except: v['thy'] = 317.00
+    try: v['bist'] = round(yf.Ticker("XU100.IS").history(period="1d")['Close'].iloc[-1], 0)
+    except: v['bist'] = 0
+    try: v['usd'] = round(yf.Ticker("USDTRY=X").history(period="1d")['Close'].iloc[-1], 2)
+    except: v['usd'] = 0
+    v['altin'] = 6170  # manuel güncelleyin
+    try: v['aselsan'] = round(yf.Ticker("ASELS.IS").history(period="1d")['Close'].iloc[-1], 2)
+    except: v['aselsan'] = 0
+    try: v['akbnk'] = round(yf.Ticker("AKBNK.IS").history(period="1d")['Close'].iloc[-1], 2)
+    except: v['akbnk'] = 0
+    try: v['ykbnk'] = round(yf.Ticker("YKBNK.IS").history(period="1d")['Close'].iloc[-1], 2)
+    except: v['ykbnk'] = 0
+    try: v['thy'] = round(yf.Ticker("THYAO.IS").history(period="1d")['Close'].iloc[-1], 2)
+    except: v['thy'] = 0
     return v
 
 v = veri_cek()
 
 # ------------------------------------------------------------
-# 2. TEMEL GÖSTERGELER
+# DEEPSEEK'E GÖNDER BUTONU
+# ------------------------------------------------------------
+st.markdown("---")
+st.subheader("🤖 DeepSeek Analizi İçin")
+
+# DeepSeek formatında metin oluştur
+deepseek_metni = f"""BIST: {v['bist']:,.0f}
+USD: {v['usd']:.2f}
+Altın: {v['altin']:,.0f}
+ASELSAN: {v['aselsan']:.2f}
+AKBNK: {v['akbnk']:.2f}
+THYAO: {v['thy']:.2f}
+YKBNK: {v['ykbnk']:.2f}"""
+
+st.code(deepseek_metni, language="")
+
+col1, col2 = st.columns([1, 3])
+with col1:
+    st.download_button(
+        label="📋 Panoya Kopyala",
+        data=deepseek_metni,
+        file_name="bist_veri.txt",
+        mime="text/plain"
+    )
+with col2:
+    st.info("👆 Butona tıkla, açılan dosyayı kaydet, içindeki metni kopyalayıp DeepSeek sohbetine yapıştır.")
+
+st.markdown("---")
+
+# ------------------------------------------------------------
+# TEMEL GÖSTERGELER
 # ------------------------------------------------------------
 st.subheader("📈 Piyasa Özeti")
 c1, c2, c3 = st.columns(3)
@@ -52,11 +74,10 @@ c3.metric("Gram Altın", f"{v['altin']:,.0f} ₺")
 st.divider()
 
 # ------------------------------------------------------------
-# 3. PORTFÖY
+# PORTFÖY
 # ------------------------------------------------------------
 st.subheader("💼 Portföyüm (40.000 TL)")
 
-# Portföy tanımı
 portfoy = [
     {"Ad": "PPF",              "Lot": 12000, "Alış": 1.00,   "Güncel": 1.00},
     {"Ad": "Altın Fonu",       "Lot": 6000,  "Alış": 6170,   "Güncel": v['altin']},
@@ -66,34 +87,33 @@ portfoy = [
     {"Ad": "THYAO",            "Lot": 13,    "Alış": 317.00, "Güncel": v['thy']},
 ]
 
-# Hesaplamalar
 toplam = 0
 for p in portfoy:
-    p["Maliyet"] = p["Lot"] * p["Alış"] if p["Ad"] not in ["PPF", "Altın Fonu"] else p["Lot"]
-    p["Değer"] = p["Lot"] * p["Güncel"] if p["Ad"] not in ["PPF", "Altın Fonu"] else p["Lot"] * (p["Güncel"]/p["Alış"])
+    if p["Ad"] in ["PPF"]:
+        p["Maliyet"] = p["Lot"]
+        p["Değer"] = p["Lot"]
+    elif p["Ad"] in ["Altın Fonu"]:
+        p["Maliyet"] = p["Lot"]
+        p["Değer"] = p["Lot"] * (p["Güncel"] / p["Alış"])
+    else:
+        p["Maliyet"] = p["Lot"] * p["Alış"]
+        p["Değer"] = p["Lot"] * p["Güncel"]
     p["K/Z"] = p["Değer"] - p["Maliyet"]
     p["K/Z %"] = (p["K/Z"] / p["Maliyet"]) * 100
     toplam += p["Değer"]
 
-# Özet
 c1, c2, c3 = st.columns(3)
 c1.metric("Toplam Değer", f"{toplam:,.0f} TL")
 c2.metric("Kâr/Zarar", f"{toplam-40000:,.0f} TL")
 c3.metric("Getiri", f"%{((toplam-40000)/40000)*100:.1f}")
 
-# Tablo
 df = pd.DataFrame(portfoy)
 df = df[["Ad", "Lot", "Alış", "Güncel", "Maliyet", "Değer", "K/Z", "K/Z %"]]
 st.dataframe(df.round(2), use_container_width=True, hide_index=True)
 
-# Pasta grafik
-st.subheader("Dağılım")
 fig = px.pie(df, values='Değer', names='Ad')
 st.plotly_chart(fig, use_container_width=True)
 
-# ------------------------------------------------------------
-# 4. HİSSE FİYATLARI
-# ------------------------------------------------------------
 st.divider()
 st.subheader("📈 Hisse Fiyatları")
 c1, c2, c3, c4 = st.columns(4)

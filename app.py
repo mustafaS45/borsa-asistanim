@@ -221,7 +221,7 @@ with orta:
                     response = requests.post(
                         "https://openrouter.ai/api/v1/chat/completions",
                         headers={"Authorization": f"Bearer {OPENROUTER_KEY}", "Content-Type": "application/json"},
-                        json={"model": "meta-llama/llama-3.1-8b-instruct:free", "messages": [{"role": "user", "content": analiz_prompt}]},
+                        json={"model": "meta-llama/llama-3.1-8b-instruct", "messages": [{"role": "user", "content": analiz_prompt}]},
                         timeout=30
                     )
                     # Hatayı görmek için tüm cevabı yazdır

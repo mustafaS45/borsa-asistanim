@@ -1,6 +1,3 @@
-import sys
-sys.path.append('.')
-
 def portfoy_hesapla(piyasa_verileri):
     """Güncel fiyatlarla portföy değerini hesaplar"""
     

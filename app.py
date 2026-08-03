@@ -9,6 +9,68 @@ import re
 
 st.set_page_config(page_title="Borsa Asistanım", page_icon="📊", layout="wide")
 
+# ------------------------------------------------------------
+# LIDER MİNİ PANEL (En Üst - Sade)
+# ------------------------------------------------------------
+try:
+    lider = yf.Ticker("LIDER.IS")
+    lider_fiyat = round(lider.history(period="1d")['Close'].iloc[-1], 2)
+except:
+    lider_fiyat = 87.70
+
+maliyet = 98.90
+lot = 342
+guncel_deger = lider_fiyat * lot
+toplam_yatirim = maliyet * lot
+zarar = guncel_deger - toplam_yatirim
+zarar_yuzde = (zarar / toplam_yatirim) * 100
+panik = maliyet * 0.90
+hedef = maliyet * 1.10
+
+durum_emoji = "🔴" if lider_fiyat <= panik else "🟡" if lider_fiyat < maliyet else "🟢"
+durum_yazi = "PANİK! SAT!" if lider_fiyat <= panik else "Zararda" if lider_fiyat < maliyet else "Kârda"
+
+st.markdown(f"""
+<div style="
+    background: {'#dc3545' if lider_fiyat <= panik else '#ffc107' if lider_fiyat < maliyet else '#28a745'};
+    color: {'white' if lider_fiyat <= panik else 'black'};
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+">
+    <span style="font-weight: bold; font-size: 18px;">{durum_emoji} LIDER</span>
+    <span style="font-size: 20px; font-weight: bold;">{lider_fiyat:.2f} TL</span>
+    <span>Maliyet: {maliyet:.2f}</span>
+    <span style="color: {'#ffcccc' if lider_fiyat <= panik else '#990000'};">Zarar: {zarar:,.0f} TL (%{zarar_yuzde:.1f})</span>
+    <span style="font-size: 12px;">🔴{panik:.2f} | 🟢{hedef:.2f}</span>
+</div>
+""", unsafe_allow_html=True)
+
+# DeepSeek butonu
+lider_veri = f"LIDER: {lider_fiyat:.2f} TL | Maliyet: {maliyet} | Zarar: {zarar:,.0f} TL (%{zarar_yuzde:.1f}) | Panik: {panik:.2f} | Hedef: {hedef:.2f}"
+
+col1, col2 = st.columns([1, 4])
+with col1:
+    st.components.v1.html(f"""
+        <textarea id="liderMini" style="display:none;">{lider_veri}</textarea>
+        <button onclick="
+            var t = document.getElementById('liderMini');
+            t.style.display='block'; t.select();
+            navigator.clipboard.writeText(t.value);
+            t.style.display='none';
+        " style="
+            padding: 6px 12px; background: #2a5298; color: white;
+            border: none; border-radius: 5px; cursor: pointer;
+            font-size: 12px;
+        ">📋 Kopyala</button>
+    """, height=35)
+with col2:
+    st.caption("Her gün bu butonla veriyi DeepSeek'e gönder")
+
 st.title("📊 Borsa Asistanım")
 st.caption(f"Son güncelleme: {datetime.now().strftime('%d.%m.%Y %H:%M')}")
 

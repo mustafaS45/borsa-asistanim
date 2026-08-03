@@ -193,7 +193,6 @@ st.subheader("🔍 BIST 100 Hızlı Tarama")
 if st.button("BIST 100 Verilerini Çek", use_container_width=True):
     with st.spinner("Tüm BIST 100 hisseleri taranıyor... Bu işlem 1-2 dakika sürebilir."):
         
-        # BIST 100 hisse listesi (Yahoo Finance sembolleri)
         bist100 = {
             "AEFES": "AEFES.IS", "AGHOL": "AGHOL.IS", "AKBNK": "AKBNK.IS",
             "AKFGY": "AKFGY.IS", "AKSA": "AKSA.IS", "ALARK": "ALARK.IS",
@@ -228,19 +227,18 @@ if st.button("BIST 100 Verilerini Çek", use_container_width=True):
         
         sonuclar = []
         progress = st.progress(0)
+        toplam = len(bist100)
         
         for i, (isim, sembol) in enumerate(bist100.items()):
             try:
                 hisse = yf.Ticker(sembol)
                 fiyat = round(hisse.history(period="1d")['Close'].iloc[-1], 2)
-                sonuclar.append({"His se": isim, "Fiyat": fiyat})
+                sonuclar.append({"Hisse": isim, "Fiyat": fiyat})
             except:
-                pass
-            progress.progress((i + 1) / len(bist100))
+                sonuclar.append({"Hisse": isim, "Fiyat": 0})
+            progress.progress((i + 1) / toplam)
         
         progress.empty()
-        
-        # Sonuçları göster
         df_bist = pd.DataFrame(sonuclar)
         st.success(f"✅ {len(df_bist)} hisse tarandı!")
         
@@ -250,8 +248,6 @@ if st.button("BIST 100 Verilerini Çek", use_container_width=True):
         for _, row in df_bist.iterrows():
             bist_metni += f"{row['Hisse']}: {row['Fiyat']:.2f}\n"
         
-        st.code(bist_metni, language="")
-        
         st.download_button(
             label="📋 BIST 100 Verisini İndir",
             data=bist_metni,
@@ -259,6 +255,5 @@ if st.button("BIST 100 Verilerini Çek", use_container_width=True):
             mime="text/plain"
         )
         
-        # Tablo
         st.dataframe(df_bist, use_container_width=True, hide_index=True)
 st.caption("⚠️ Yatırım tavsiyesi değildir. Veri: Yahoo Finance + Investing.com")

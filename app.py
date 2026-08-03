@@ -395,7 +395,7 @@ with col2:
 with col3:
     st.info(f"Pazartesiye kalan gün: {7 - datetime.now().weekday()}")
 
-# DeepSeek formatı
+# DeepSeek formatı - Panoya kopyala
 st.write("---")
 st.write("#### 🤖 DeepSeek'e Bildir")
 
@@ -410,10 +410,31 @@ Gün: {datetime.now().strftime('%A')}"""
 
 st.code(lider_metni, language="")
 
-st.download_button(
-    label="📋 DeepSeek'e Gönder",
-    data=lider_metni,
-    file_name="lider_takip.txt",
-    mime="text/plain"
-)
+st.components.v1.html(f"""
+    <textarea id="liderText" style="display:none;">{lider_metni}</textarea>
+    <button onclick="
+        var text = document.getElementById('liderText');
+        text.style.display = 'block';
+        text.select();
+        text.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(text.value).then(function() {{
+            alert('✅ LIDER verisi panoya kopyalandı! DeepSeek sohbetine yapıştırın.');
+        }});
+        text.style.display = 'none';
+    " style="
+        width: 100%;
+        padding: 12px 20px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+    ">
+    📋 LIDER Verisini Panoya Kopyala
+    </button>
+""", height=60)
+
+st.info("👆 Butona tıkla, DeepSeek sohbetine yapıştır (Ctrl+V)")
 st.caption("⚠️ Yatırım tavsiyesi değildir. Veri: Yahoo Finance + Investing.com")

@@ -234,6 +234,39 @@ with orta:
             """, height=45)
             
             st.caption("👆 DeepSeek'e gönder, tam analiz yapsın")
+                        # AI Analiz butonu
+            st.markdown("---")
+            
+            OPENROUTER_KEY = "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"
+            
+            if st.button("🧠 AI Analiz Yap", use_container_width=True):
+                with st.spinner("AI analiz yapıyor... 30 saniye sürebilir"):
+                    try:
+                        analiz_prompt = f"""Şu BIST 100 hisselerini analiz et. 
+En ucuz 5 hisseyi (F/K ve PD/DD'ye göre), en riskli 3 hisseyi, 
+ve banka hisselerinin durumunu yaz. Kısa ve net olsun.
+
+{bist_deepseek[:4000]}"""
+                        
+                        response = requests.post(
+                            "https://openrouter.ai/api/v1/chat/completions",
+                            headers={
+                                "Authorization": f"Bearer {OPENROUTER_KEY}",
+                                "Content-Type": "application/json"
+                            },
+                            json={
+                                "model": "google/gemini-flash-1.5",
+                                "messages": [{"role": "user", "content": analiz_prompt}]
+                            },
+                            timeout=30
+                        )
+                        analiz = response.json()['choices'][0]['message']['content']
+                        st.success("✅ Analiz hazır!")
+                        st.write(analiz)
+                    except Exception as e:
+                        st.error(f"Hata: {e}")
+
+
 
 # -------------------- SAĞ SÜTUN: Portföy --------------------
 with sag:

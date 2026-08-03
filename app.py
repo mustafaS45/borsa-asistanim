@@ -182,9 +182,9 @@ with orta:
             
             sonuclar = []
             progress = st.progress(0)
-            toplam = len(bist50)
+            toplam = len(bist100)
             
-            for i, (isim, sembol) in enumerate(bist50.items()):
+            for i, (isim, sembol) in enumerate(bist100.items()):
                 try:
                     hisse = yf.Ticker(sembol)
                     info = hisse.info

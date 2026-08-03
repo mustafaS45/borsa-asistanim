@@ -293,4 +293,127 @@ if st.button("BIST 100 Detaylı Verileri Çek", use_container_width=True):
             file_name="bist100_detayli.txt",
             mime="text/plain"
         )
+
+# ------------------------------------------------------------
+# LIDER TAKİP PANELİ
+# ------------------------------------------------------------
+st.divider()
+st.subheader("🚨 LIDER Acil Takip Paneli")
+
+# LIDER verisini çek
+try:
+    lider = yf.Ticker("LIDER.IS")
+    lider_fiyat = round(lider.history(period="1d")['Close'].iloc[-1], 2)
+    lider_info = lider.info
+    lider_yuksek = lider_info.get('fiftyTwoWeekHigh', 154)
+    lider_dusuk = lider_info.get('fiftyTwoWeekLow', 39)
+except:
+    lider_fiyat = 87.70
+    lider_yuksek = 154
+    lider_dusuk = 39
+
+# Kullanıcı girişleri
+st.write("#### Yatırım Bilgileriniz")
+col1, col2 = st.columns(2)
+with col1:
+    maliyet = st.number_input("Maliyet Fiyatı (TL)", value=87.70, step=0.01)
+with col2:
+    lot = st.number_input("Lot Adedi", value=342, step=1)
+
+# Hesaplamalar
+toplam_yatirim = maliyet * lot
+guncel_deger = lider_fiyat * lot
+kar_zarar = guncel_deger - toplam_yatirim
+kar_zarar_yuzde = (kar_zarar / toplam_yatirim) * 100
+
+# Kritik seviyeler
+panik_fiyat = maliyet * 0.90
+hedef_fiyat = maliyet * 1.10
+
+# Gösterge paneli
+st.write("---")
+st.write("#### 📊 Anlık Durum")
+
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("LIDER Fiyat", f"{lider_fiyat:.2f} TL")
+col2.metric("Güncel Değer", f"{guncel_deger:,.0f} TL")
+col3.metric("Kâr/Zarar", f"{kar_zarar:,.0f} TL", delta=f"%{kar_zarar_yuzde:.1f}")
+col4.metric("Maliyet", f"{maliyet:.2f} TL")
+
+st.write("---")
+st.write("#### 🎯 Kritik Seviyeler")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.metric("🔴 Panik Satış", f"{panik_fiyat:.2f} TL", delta=f"-{maliyet - panik_fiyat:.2f} TL")
+    if lider_fiyat <= panik_fiyat:
+        st.error("🚨 PANİK SEVİYESİNDE! HEMEN SAT!")
+    else:
+        st.info(f"Kalan: {lider_fiyat - panik_fiyat:.2f} TL")
+
+with col2:
+    st.metric("🟡 Maliyet", f"{maliyet:.2f} TL", delta="Başabaş")
+    if lider_fiyat >= maliyet:
+        st.success("✅ Kâra geçtin!")
+    else:
+        st.warning(f"Zarardasın: -{maliyet - lider_fiyat:.2f} TL")
+
+with col3:
+    st.metric("🟢 Hedef Satış", f"{hedef_fiyat:.2f} TL", delta=f"+{hedef_fiyat - maliyet:.2f} TL")
+    if lider_fiyat >= hedef_fiyat:
+        st.success("🎯 HEDEFTE! KÂRLA SAT!")
+    else:
+        st.info(f"Kalan: {hedef_fiyat - lider_fiyat:.2f} TL")
+
+# İlerleme çubuğu
+st.write("---")
+st.write("#### 📈 Fiyat Aralığı")
+
+aralik_yuzde = (lider_fiyat - lider_dusuk) / (lider_yuksek - lider_dusuk)
+st.progress(aralik_yuzde)
+st.caption(f"52 Hafta: {lider_dusuk:.0f} TL ────────────── {lider_yuksek:.0f} TL")
+
+# Aksiyon butonu
+st.write("---")
+st.write("#### ⚡ Aksiyon")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    if lider_fiyat <= panik_fiyat:
+        st.button("🔴 ACİL SATIŞ YAP!", type="primary", use_container_width=True)
+    else:
+        st.button("🟢 Bekle (Panik Yok)", disabled=True, use_container_width=True)
+
+with col2:
+    if lider_fiyat >= hedef_fiyat:
+        st.button("🟢 KÂRLA SAT!", type="primary", use_container_width=True)
+    else:
+        st.button("🟡 Bekle (Hedefte Değil)", disabled=True, use_container_width=True)
+
+with col3:
+    st.info(f"Pazartesiye kalan gün: {7 - datetime.now().weekday()}")
+
+# DeepSeek formatı
+st.write("---")
+st.write("#### 🤖 DeepSeek'e Bildir")
+
+lider_metni = f"""LIDER TAKİP:
+Fiyat: {lider_fiyat:.2f}
+Maliyet: {maliyet:.2f}
+Lot: {lot}
+Zarar: {kar_zarar:,.0f} TL (%{kar_zarar_yuzde:.1f})
+Panik: {panik_fiyat:.2f}
+Hedef: {hedef_fiyat:.2f}
+Gün: {datetime.now().strftime('%A')}"""
+
+st.code(lider_metni, language="")
+
+st.download_button(
+    label="📋 DeepSeek'e Gönder",
+    data=lider_metni,
+    file_name="lider_takip.txt",
+    mime="text/plain"
+)
 st.caption("⚠️ Yatırım tavsiyesi değildir. Veri: Yahoo Finance + Investing.com")

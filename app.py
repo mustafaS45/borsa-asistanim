@@ -316,7 +316,7 @@ except:
 st.write("#### Yatırım Bilgileriniz")
 col1, col2 = st.columns(2)
 with col1:
-    maliyet = st.number_input("Maliyet Fiyatı (TL)", value=87.70, step=0.01)
+    maliyet = st.number_input("Maliyet Fiyatı (TL)", value=98.90, step=0.01)
 with col2:
     lot = st.number_input("Lot Adedi", value=342, step=1)
 

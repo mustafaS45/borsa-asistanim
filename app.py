@@ -5,6 +5,8 @@ import plotly.express as px
 from datetime import datetime
 import time
 import os
+import sys
+sys.path.append('.')
 
 # Sayfa yapılandırması
 st.set_page_config(

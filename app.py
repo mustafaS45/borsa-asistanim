@@ -183,4 +183,82 @@ c3.metric("YKBNK", f"{v['ykbnk']:.2f} TL")
 c4.metric("THYAO", f"{v['thy']:.2f} TL")
 
 st.divider()
+
+# ------------------------------------------------------------
+# BIST 100 TARAMA
+# ------------------------------------------------------------
+st.divider()
+st.subheader("🔍 BIST 100 Hızlı Tarama")
+
+if st.button("BIST 100 Verilerini Çek", use_container_width=True):
+    with st.spinner("Tüm BIST 100 hisseleri taranıyor... Bu işlem 1-2 dakika sürebilir."):
+        
+        # BIST 100 hisse listesi (Yahoo Finance sembolleri)
+        bist100 = {
+            "AEFES": "AEFES.IS", "AGHOL": "AGHOL.IS", "AKBNK": "AKBNK.IS",
+            "AKFGY": "AKFGY.IS", "AKSA": "AKSA.IS", "ALARK": "ALARK.IS",
+            "ALBRK": "ALBRK.IS", "ALFAS": "ALFAS.IS", "ARCLK": "ARCLK.IS",
+            "ASELS": "ASELS.IS", "ASTOR": "ASTOR.IS", "ASUZU": "ASUZU.IS",
+            "AYGAZ": "AYGAZ.IS", "BAGFS": "BAGFS.IS", "BERA": "BERA.IS",
+            "BIMAS": "BIMAS.IS", "BRSAN": "BRSAN.IS", "BRYAT": "BRYAT.IS",
+            "BUCIM": "BUCIM.IS", "CANTE": "CANTE.IS", "CCOLA": "CCOLA.IS",
+            "CIMSA": "CIMSA.IS", "CWENE": "CWENE.IS", "DOHOL": "DOHOL.IS",
+            "ECILC": "ECILC.IS", "ECZYT": "ECZYT.IS", "EGGUB": "EGGUB.IS",
+            "EKGYO": "EKGYO.IS", "ENJSA": "ENJSA.IS", "ENKAI": "ENKAI.IS",
+            "EREGL": "EREGL.IS", "EUPWR": "EUPWR.IS", "FENER": "FENER.IS",
+            "FROTO": "FROTO.IS", "GARAN": "GARAN.IS", "GESAN": "GESAN.IS",
+            "GOLTS": "GOLTS.IS", "GUBRF": "GUBRF.IS", "HALKB": "HALKB.IS",
+            "HEKTS": "HEKTS.IS", "IPEKE": "IPEKE.IS", "ISCTR": "ISCTR.IS",
+            "ISGYO": "ISGYO.IS", "ISMEN": "ISMEN.IS", "IZENR": "IZENR.IS",
+            "KAYSE": "KAYSE.IS", "KCAER": "KCAER.IS", "KCHOL": "KCHOL.IS",
+            "KLSER": "KLSER.IS", "KONTR": "KONTR.IS", "KONYA": "KONYA.IS",
+            "KOZAA": "KOZAA.IS", "KOZAL": "KOZAL.IS", "KRDMD": "KRDMD.IS",
+            "MAVI": "MAVI.IS", "MGROS": "MGROS.IS", "MIATK": "MIATK.IS",
+            "ODAS": "ODAS.IS", "OTKAR": "OTKAR.IS", "OYAKC": "OYAKC.IS",
+            "PETKM": "PETKM.IS", "PGSUS": "PGSUS.IS", "QUAGR": "QUAGR.IS",
+            "SAHOL": "SAHOL.IS", "SASA": "SASA.IS", "SISE": "SISE.IS",
+            "SKBNK": "SKBNK.IS", "SMRTG": "SMRTG.IS", "SOKM": "SOKM.IS",
+            "TATEN": "TATEN.IS", "TAVHL": "TAVHL.IS", "TCELL": "TCELL.IS",
+            "THYAO": "THYAO.IS", "TKFEN": "TKFEN.IS", "TOASO": "TOASO.IS",
+            "TSKB": "TSKB.IS", "TTKOM": "TTKOM.IS", "TTRAK": "TTRAK.IS",
+            "TUKAS": "TUKAS.IS", "TUPRS": "TUPRS.IS", "ULKER": "ULKER.IS",
+            "VAKBN": "VAKBN.IS", "VESTL": "VESTL.IS", "YATAS": "YATAS.IS",
+            "YGGYO": "YGGYO.IS", "YKBNK": "YKBNK.IS", "ZOREN": "ZOREN.IS"
+        }
+        
+        sonuclar = []
+        progress = st.progress(0)
+        
+        for i, (isim, sembol) in enumerate(bist100.items()):
+            try:
+                hisse = yf.Ticker(sembol)
+                fiyat = round(hisse.history(period="1d")['Close'].iloc[-1], 2)
+                sonuclar.append({"His se": isim, "Fiyat": fiyat})
+            except:
+                pass
+            progress.progress((i + 1) / len(bist100))
+        
+        progress.empty()
+        
+        # Sonuçları göster
+        df_bist = pd.DataFrame(sonuclar)
+        st.success(f"✅ {len(df_bist)} hisse tarandı!")
+        
+        # DeepSeek formatı
+        st.subheader("📋 DeepSeek'e Gönder")
+        bist_metni = "BIST 100 GÜNCEL:\n"
+        for _, row in df_bist.iterrows():
+            bist_metni += f"{row['Hisse']}: {row['Fiyat']:.2f}\n"
+        
+        st.code(bist_metni, language="")
+        
+        st.download_button(
+            label="📋 BIST 100 Verisini İndir",
+            data=bist_metni,
+            file_name="bist100.txt",
+            mime="text/plain"
+        )
+        
+        # Tablo
+        st.dataframe(df_bist, use_container_width=True, hide_index=True)
 st.caption("⚠️ Yatırım tavsiyesi değildir. Veri: Yahoo Finance + Investing.com")

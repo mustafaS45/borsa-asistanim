@@ -202,6 +202,39 @@ with orta:
             st.success(f"✅ {len(sonuclar)} hisse")
             st.dataframe(pd.DataFrame(sonuclar), use_container_width=True, hide_index=True)
 
+            # DeepSeek için BIST 100 verisi
+            st.markdown("---")
+            
+            bist_deepseek = "BIST 100 TARAMA:\n"
+            for _, row in pd.DataFrame(sonuclar).iterrows():
+                bist_deepseek += f"{row['Hisse']}: {row['Fiyat']:.2f} TL | F/K: {row['F/K']} | PD/DD: {row['PD/DD']}\n"
+            
+            st.components.v1.html(f"""
+                <textarea id="bist100Text" style="display:none;">{bist_deepseek}</textarea>
+                <button onclick="
+                    var t = document.getElementById('bist100Text');
+                    t.style.display='block'; t.select();
+                    navigator.clipboard.writeText(t.value).then(function() {{
+                        alert('✅ BIST 100 verisi panoya kopyalandı!');
+                    }});
+                    t.style.display='none';
+                " style="
+                    width: 100%;
+                    padding: 8px;
+                    background: #dc3545;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                    font-size: 13px;
+                    font-weight: bold;
+                    cursor: pointer;
+                ">
+                📋 BIST 100 Verisini Kopyala
+                </button>
+            """, height=45)
+            
+            st.caption("👆 DeepSeek'e gönder, tam analiz yapsın")
+
 # -------------------- SAĞ SÜTUN: Portföy --------------------
 with sag:
     st.subheader("💼 Portföyüm")

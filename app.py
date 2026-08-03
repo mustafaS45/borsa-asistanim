@@ -299,53 +299,6 @@ with st.spinner("Veriler çekiliyor..."):
     v = veri_cek()
     v['altin'] = cek_altin()
     v['faiz'] = cek_faiz()
-
-# ------------------------------------------------------------
-# DEEPSEEK'E GÖNDER
-# ------------------------------------------------------------
-st.markdown("---")
-st.subheader("🤖 DeepSeek Analizi İçin")
-
-deepseek_metni = f"""BIST: {v['bist']:,.0f}
-USD: {v['usd']:.2f}
-Altın: {v['altin']:,.0f}
-Faiz: %{v['faiz']:.1f}
-ASELSAN: {v['aselsan']:.2f}
-AKBNK: {v['akbnk']:.2f}
-THYAO: {v['thy']:.2f}
-YKBNK: {v['ykbnk']:.2f}"""
-
-st.code(deepseek_metni, language="")
-
-# Direkt panoya kopyalama butonu
-st.components.v1.html(f"""
-    <textarea id="deepseekText" style="display:none;">{deepseek_metni}</textarea>
-    <button onclick="
-        var text = document.getElementById('deepseekText');
-        text.style.display = 'block';
-        text.select();
-        text.setSelectionRange(0, 99999);
-        navigator.clipboard.writeText(text.value).then(function() {{
-            alert('✅ Panoya kopyalandı! Hemen DeepSeek sohbetine yapıştırabilirsiniz.');
-        }});
-        text.style.display = 'none';
-    " style="
-        width: 100%;
-        padding: 12px 20px;
-        background: #2a5298;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-    ">
-    📋 Tek Tıkla Panoya Kopyala
-    </button>
-""", height=60)
-
-st.info("👆 Butona tıkla, DeepSeek sohbetine yapıştır (Ctrl+V)")
-
 # ------------------------------------------------------------
 # PİYASA ÖZETİ
 # ------------------------------------------------------------

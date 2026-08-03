@@ -8,14 +8,16 @@ import requests
 from bs4 import BeautifulSoup
 import re
 
+
+
+
+st.set_page_config(page_title="Borsa Asistanım", page_icon="📊", layout="wide")
+
 # Otomatik yenileme (5 dakikada bir)
 st.markdown("""
 <meta http-equiv="refresh" content="300">
 """, unsafe_allow_html=True)
 
-
-
-st.set_page_config(page_title="Borsa Asistanım", page_icon="📊", layout="wide")
 
 # ============================================
 # TRADINGVIEW TARZI KOYU TEMA

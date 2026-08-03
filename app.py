@@ -206,34 +206,7 @@ with orta:
                 📋 BIST 100 Kopyala</button>
             """, height=45)
     
-    # AI Analiz (BIST 100 if'inin DIŞINDA)
-    st.markdown("---")
-    OPENROUTER_KEY = "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"
-    
-    if "bist_veri" not in st.session_state:
-        st.session_state.bist_veri = ""
-    
-    if st.button("🧠 AI Analiz Yap", use_container_width=True):
-        if st.session_state.bist_veri:
-            with st.spinner("AI analiz yapıyor..."):
-                try:
-                    analiz_prompt = f"Şu BIST 100 hisselerini analiz et. En ucuz 5 hisseyi (F/K ve PD/DD'ye göre), en riskli 3 hisseyi yaz. Kısa olsun.\n{st.session_state.bist_veri[:4000]}"
-                    response = requests.post(
-                        "https://openrouter.ai/api/v1/chat/completions",
-                        headers={"Authorization": f"Bearer {OPENROUTER_KEY}", "Content-Type": "application/json"},
-                        json={"model": "meta-llama/llama-3.1-8b-instruct", "messages": [{"role": "user", "content": analiz_prompt}]},
-                        timeout=30
-                    )
-                    # Hatayı görmek için tüm cevabı yazdır
-                    st.write("API Cevabı:", response.json())
-                    analiz = response.json()['choices'][0]['message']['content']
-                    st.success("✅ Analiz hazır!")
-                    st.write(analiz)
-                except Exception as e:
-                    st.error(f"Hata: {e}")
-                    st.write("Tam API cevabı:", response.json() if 'response' in dir() else "Yok")
-        else:
-            st.warning("⚠️ Önce BIST 100 Çek butonuna tıkla!")
+   
 
 # --- SAĞ: Portföy ---
 with sag:

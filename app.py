@@ -1,3 +1,8 @@
+# Otomatik yenileme (5 dakikada bir)
+st.markdown("""
+<meta http-equiv="refresh" content="300">
+""", unsafe_allow_html=True)
+
 import streamlit as st
 import yfinance as yf
 import pandas as pd

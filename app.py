@@ -460,46 +460,5 @@ with col2:
 with col3:
     st.info(f"Pazartesiye kalan gün: {7 - datetime.now().weekday()}")
 
-# DeepSeek formatı - Panoya kopyala
-st.write("---")
-st.write("#### 🤖 DeepSeek'e Bildir")
 
-lider_metni = f"""LIDER TAKİP:
-Fiyat: {lider_fiyat:.2f}
-Maliyet: {maliyet:.2f}
-Lot: {lot}
-Zarar: {kar_zarar:,.0f} TL (%{kar_zarar_yuzde:.1f})
-Panik: {panik_fiyat:.2f}
-Hedef: {hedef_fiyat:.2f}
-Gün: {datetime.now().strftime('%A')}"""
-
-st.code(lider_metni, language="")
-
-st.components.v1.html(f"""
-    <textarea id="liderText" style="display:none;">{lider_metni}</textarea>
-    <button onclick="
-        var text = document.getElementById('liderText');
-        text.style.display = 'block';
-        text.select();
-        text.setSelectionRange(0, 99999);
-        navigator.clipboard.writeText(text.value).then(function() {{
-            alert('✅ LIDER verisi panoya kopyalandı! DeepSeek sohbetine yapıştırın.');
-        }});
-        text.style.display = 'none';
-    " style="
-        width: 100%;
-        padding: 12px 20px;
-        background: #dc3545;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-    ">
-    📋 LIDER Verisini Panoya Kopyala
-    </button>
-""", height=60)
-
-st.info("👆 Butona tıkla, DeepSeek sohbetine yapıştır (Ctrl+V)")
 st.caption("⚠️ Yatırım tavsiyesi değildir. Veri: Yahoo Finance + Investing.com")

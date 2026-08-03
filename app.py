@@ -144,28 +144,41 @@ THYAO: {v['thy']:.2f} | YKBNK: {v['ykbnk']:.2f} | SISE: {v['sise']:.2f} | TTKOM:
 
 # -------------------- ORTA SÜTUN: BIST Tarama --------------------
 with orta:
-    st.subheader("🔍 BIST 50 Tarama")
+    st.subheader("🔍 BIST 100 Tarama")
     
-    if st.button("BIST 50 Çek", use_container_width=True):
+    if st.button("BIST 100 Çek", use_container_width=True):
         with st.spinner("Taranıyor..."):
-            bist50 = {
-                "AKBNK": "AKBNK.IS", "ASELS": "ASELS.IS", "BIMAS": "BIMAS.IS",
-                "DOHOL": "DOHOL.IS", "EKGYO": "EKGYO.IS", "EREGL": "EREGL.IS",
-                "FROTO": "FROTO.IS", "GARAN": "GARAN.IS", "HALKB": "HALKB.IS",
-                "ISCTR": "ISCTR.IS", "KCHOL": "KCHOL.IS", "KRDMD": "KRDMD.IS",
-                "MGROS": "MGROS.IS", "PETKM": "PETKM.IS", "PGSUS": "PGSUS.IS",
-                "SAHOL": "SAHOL.IS", "SASA": "SASA.IS", "SISE": "SISE.IS",
-                "TCELL": "TCELL.IS", "THYAO": "THYAO.IS", "TOASO": "TOASO.IS",
-                "TTKOM": "TTKOM.IS", "TTRAK": "TTRAK.IS", "TUPRS": "TUPRS.IS",
-                "ULKER": "ULKER.IS", "VAKBN": "VAKBN.IS", "YKBNK": "YKBNK.IS",
-                "ARCLK": "ARCLK.IS", "CCOLA": "CCOLA.IS", "MAVI": "MAVI.IS",
-                "OTKAR": "OTKAR.IS", "TAVHL": "TAVHL.IS", "SOKM": "SOKM.IS",
-                "ENKAI": "ENKAI.IS", "HEKTS": "HEKTS.IS", "VESTL": "VESTL.IS",
-                "ODAS": "ODAS.IS", "ZOREN": "ZOREN.IS", "TKFEN": "TKFEN.IS",
-                "ECZYT": "ECZYT.IS", "GUBRF": "GUBRF.IS", "CIMSA": "CIMSA.IS",
-                "YATAS": "YATAS.IS", "TUKAS": "TUKAS.IS", "KONTR": "KONTR.IS",
-                "ENJSA": "ENJSA.IS", "KOZAA": "KOZAA.IS", "KOZAL": "KOZAL.IS"
-            }
+            bist100 = {
+    "AEFES": "AEFES.IS", "AGHOL": "AGHOL.IS", "AKBNK": "AKBNK.IS",
+    "AKFGY": "AKFGY.IS", "AKSA": "AKSA.IS", "ALARK": "ALARK.IS",
+    "ALBRK": "ALBRK.IS", "ALFAS": "ALFAS.IS", "ARCLK": "ARCLK.IS",
+    "ASELS": "ASELS.IS", "ASTOR": "ASTOR.IS", "ASUZU": "ASUZU.IS",
+    "AYGAZ": "AYGAZ.IS", "BAGFS": "BAGFS.IS", "BERA": "BERA.IS",
+    "BIMAS": "BIMAS.IS", "BRSAN": "BRSAN.IS", "BRYAT": "BRYAT.IS",
+    "BUCIM": "BUCIM.IS", "CANTE": "CANTE.IS", "CCOLA": "CCOLA.IS",
+    "CIMSA": "CIMSA.IS", "CWENE": "CWENE.IS", "DOHOL": "DOHOL.IS",
+    "ECILC": "ECILC.IS", "ECZYT": "ECZYT.IS", "EGGUB": "EGGUB.IS",
+    "EKGYO": "EKGYO.IS", "ENJSA": "ENJSA.IS", "ENKAI": "ENKAI.IS",
+    "EREGL": "EREGL.IS", "EUPWR": "EUPWR.IS", "FENER": "FENER.IS",
+    "FROTO": "FROTO.IS", "GARAN": "GARAN.IS", "GESAN": "GESAN.IS",
+    "GOLTS": "GOLTS.IS", "GUBRF": "GUBRF.IS", "HALKB": "HALKB.IS",
+    "HEKTS": "HEKTS.IS", "IPEKE": "IPEKE.IS", "ISCTR": "ISCTR.IS",
+    "ISGYO": "ISGYO.IS", "ISMEN": "ISMEN.IS", "IZENR": "IZENR.IS",
+    "KAYSE": "KAYSE.IS", "KCAER": "KCAER.IS", "KCHOL": "KCHOL.IS",
+    "KLSER": "KLSER.IS", "KONTR": "KONTR.IS", "KONYA": "KONYA.IS",
+    "KOZAA": "KOZAA.IS", "KOZAL": "KOZAL.IS", "KRDMD": "KRDMD.IS",
+    "MAVI": "MAVI.IS", "MGROS": "MGROS.IS", "MIATK": "MIATK.IS",
+    "ODAS": "ODAS.IS", "OTKAR": "OTKAR.IS", "OYAKC": "OYAKC.IS",
+    "PETKM": "PETKM.IS", "PGSUS": "PGSUS.IS", "QUAGR": "QUAGR.IS",
+    "SAHOL": "SAHOL.IS", "SASA": "SASA.IS", "SISE": "SISE.IS",
+    "SKBNK": "SKBNK.IS", "SMRTG": "SMRTG.IS", "SOKM": "SOKM.IS",
+    "TATEN": "TATEN.IS", "TAVHL": "TAVHL.IS", "TCELL": "TCELL.IS",
+    "THYAO": "THYAO.IS", "TKFEN": "TKFEN.IS", "TOASO": "TOASO.IS",
+    "TSKB": "TSKB.IS", "TTKOM": "TTKOM.IS", "TTRAK": "TTRAK.IS",
+    "TUKAS": "TUKAS.IS", "TUPRS": "TUPRS.IS", "ULKER": "ULKER.IS",
+    "VAKBN": "VAKBN.IS", "VESTL": "VESTL.IS", "YATAS": "YATAS.IS",
+    "YGGYO": "YGGYO.IS", "YKBNK": "YKBNK.IS", "ZOREN": "ZOREN.IS"
+}
             
             sonuclar = []
             progress = st.progress(0)

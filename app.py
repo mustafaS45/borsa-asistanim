@@ -162,12 +162,7 @@ TTKOM: {v['ttkom']:.2f}"""
     
     # Piyasa özeti
     st.markdown("---")
-    st.subheader("📈 Piyasa Özeti")
-    c1, c2 = st.columns(2)
-    c1.metric("BIST 100", f"{v['bist']:,.0f}")
-    c2.metric("USD/TRY", f"{v['usd']:.2f} ₺")
-    c1.metric("Gram Altın", f"{altin_manual:,.0f} ₺")
-    c2.metric("Faiz", f"%{faiz_manual:.1f}")
+ 
 
 # -------------------- SAĞ SÜTUN --------------------
 with sag:

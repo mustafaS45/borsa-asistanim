@@ -224,11 +224,14 @@ with orta:
                         json={"model": "google/gemini-flash-1.5", "messages": [{"role": "user", "content": analiz_prompt}]},
                         timeout=30
                     )
+                    # Hatayı görmek için tüm cevabı yazdır
+                    st.write("API Cevabı:", response.json())
                     analiz = response.json()['choices'][0]['message']['content']
                     st.success("✅ Analiz hazır!")
                     st.write(analiz)
                 except Exception as e:
                     st.error(f"Hata: {e}")
+                    st.write("Tam API cevabı:", response.json() if 'response' in dir() else "Yok")
         else:
             st.warning("⚠️ Önce BIST 100 Çek butonuna tıkla!")
 

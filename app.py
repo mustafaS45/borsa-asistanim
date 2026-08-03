@@ -92,18 +92,34 @@ YKBNK: {v['ykbnk']:.2f}"""
 
 st.code(deepseek_metni, language="")
 
-col1, col2 = st.columns([1, 3])
-with col1:
-    st.download_button(
-        label="📋 Dosyayı İndir",
-        data=deepseek_metni,
-        file_name="bist_veri.txt",
-        mime="text/plain"
-    )
-with col2:
-    st.info("👆 Butona tıkla, inen dosyayı aç, metni kopyalayıp DeepSeek'e yapıştır.")
+# Direkt panoya kopyalama butonu
+st.components.v1.html(f"""
+    <textarea id="deepseekText" style="display:none;">{deepseek_metni}</textarea>
+    <button onclick="
+        var text = document.getElementById('deepseekText');
+        text.style.display = 'block';
+        text.select();
+        text.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(text.value).then(function() {{
+            alert('✅ Panoya kopyalandı! Hemen DeepSeek sohbetine yapıştırabilirsiniz.');
+        }});
+        text.style.display = 'none';
+    " style="
+        width: 100%;
+        padding: 12px 20px;
+        background: #2a5298;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+    ">
+    📋 Tek Tıkla Panoya Kopyala
+    </button>
+""", height=60)
 
-st.markdown("---")
+st.info("👆 Butona tıkla, DeepSeek sohbetine yapıştır (Ctrl+V)")
 
 # ------------------------------------------------------------
 # PİYASA ÖZETİ

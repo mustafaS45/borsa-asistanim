@@ -185,13 +185,13 @@ c4.metric("THYAO", f"{v['thy']:.2f} TL")
 st.divider()
 
 # ------------------------------------------------------------
-# BIST 100 TARAMA
+# BIST 100 DETAYLI TARAMA
 # ------------------------------------------------------------
 st.divider()
-st.subheader("🔍 BIST 100 Hızlı Tarama")
+st.subheader("🔍 BIST 100 Detaylı Tarama (F/K, PD/DD, Hacim)")
 
-if st.button("BIST 100 Verilerini Çek", use_container_width=True):
-    with st.spinner("Tüm BIST 100 hisseleri taranıyor... Bu işlem 1-2 dakika sürebilir."):
+if st.button("BIST 100 Detaylı Verileri Çek", use_container_width=True):
+    with st.spinner("Tüm BIST 100 hisseleri taranıyor... 2-3 dakika sürebilir."):
         
         bist100 = {
             "AEFES": "AEFES.IS", "AGHOL": "AGHOL.IS", "AKBNK": "AKBNK.IS",
@@ -232,28 +232,65 @@ if st.button("BIST 100 Verilerini Çek", use_container_width=True):
         for i, (isim, sembol) in enumerate(bist100.items()):
             try:
                 hisse = yf.Ticker(sembol)
+                info = hisse.info
                 fiyat = round(hisse.history(period="1d")['Close'].iloc[-1], 2)
-                sonuclar.append({"Hisse": isim, "Fiyat": fiyat})
+                
+                # Günlük değişim
+                try:
+                    prev = hisse.history(period="5d")['Close'].iloc[-2]
+                    degisim = round(((fiyat - prev) / prev) * 100, 2)
+                except:
+                    degisim = 0
+                
+                sonuclar.append({
+                    "Hisse": isim,
+                    "Fiyat": fiyat,
+                    "Değişim %": degisim,
+                    "F/K": info.get("trailingPE", "-"),
+                    "PD/DD": info.get("priceToBook", "-"),
+                    "Hacim": info.get("volume", "-")
+                })
             except:
-                sonuclar.append({"Hisse": isim, "Fiyat": 0})
+                sonuclar.append({
+                    "Hisse": isim, "Fiyat": 0, "Değişim %": 0,
+                    "F/K": "-", "PD/DD": "-", "Hacim": "-"
+                })
             progress.progress((i + 1) / toplam)
         
         progress.empty()
         df_bist = pd.DataFrame(sonuclar)
-        st.success(f"✅ {len(df_bist)} hisse tarandı!")
+        st.success(f"✅ {len(df_bist)} hisse detaylı tarandı!")
+        
+        # Filtreleme
+        st.subheader("🎯 Filtrele")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            fk_max = st.number_input("Maks F/K", value=20, step=1)
+        with col2:
+            pddd_max = st.number_input("Maks PD/DD", value=5, step=1)
+        with col3:
+            sec = st.selectbox("Sektör", ["Hepsi", "Banka", "Sanayi", "Holding", "Teknoloji"])
+        
+        # Filtre uygula
+        filtreli = df_bist.copy()
+        filtreli = filtreli[filtreli["Fiyat"] > 0]
+        
+        if sec == "Banka":
+            bankalar = ["AKBNK", "YKBNK", "GARAN", "ISCTR", "HALKB", "VAKBN", "TSKB", "SKBNK"]
+            filtreli = filtreli[filtreli["Hisse"].isin(bankalar)]
+        
+        st.dataframe(filtreli, use_container_width=True, hide_index=True)
         
         # DeepSeek formatı
         st.subheader("📋 DeepSeek'e Gönder")
-        bist_metni = "BIST 100 GÜNCEL:\n"
-        for _, row in df_bist.iterrows():
-            bist_metni += f"{row['Hisse']}: {row['Fiyat']:.2f}\n"
+        bist_metni = "BIST 100 DETAYLI:\n"
+        for _, row in filtreli.iterrows():
+            bist_metni += f"{row['Hisse']}: {row['Fiyat']:.2f} TL | Günlük: %{row['Değişim %']} | F/K: {row['F/K']} | PD/DD: {row['PD/DD']}\n"
         
         st.download_button(
-            label="📋 BIST 100 Verisini İndir",
+            label="📋 Detaylı Veriyi İndir",
             data=bist_metni,
-            file_name="bist100.txt",
+            file_name="bist100_detayli.txt",
             mime="text/plain"
         )
-        
-        st.dataframe(df_bist, use_container_width=True, hide_index=True)
 st.caption("⚠️ Yatırım tavsiyesi değildir. Veri: Yahoo Finance + Investing.com")

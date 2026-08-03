@@ -10,6 +10,138 @@ import re
 st.set_page_config(page_title="Borsa Asistanım", page_icon="📊", layout="wide")
 
 # ============================================
+# MODERN TASARIM - CSS
+# ============================================
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .stApp {
+        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    }
+    
+    .main .block-container {
+        padding: 2rem 3rem;
+        max-width: 1400px;
+    }
+    
+    .modern-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 20px;
+        margin: 10px 0;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    
+    .lider-panel {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 16px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+    }
+    
+    .lider-panel.panik {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .lider-panel.zarar {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        color: #333 !important;
+    }
+    
+    .lider-panel.kar {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        color: #333 !important;
+    }
+    
+    .metric-card {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(5px);
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .metric-card h3 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin: 8px 0;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .metric-card small {
+        color: #a0a0b0;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .stButton > button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 10px !important;
+        padding: 10px 20px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.5px !important;
+        transition: all 0.3s !important;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5) !important;
+    }
+    
+    .stDataFrame {
+        background: rgba(255, 255, 255, 0.03) !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    h1 {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800 !important;
+        font-size: 2.5rem !important;
+    }
+    
+    h2, h3 {
+        color: #e0e0f0 !important;
+        font-weight: 600 !important;
+    }
+    
+    hr {
+        border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 10px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# ============================================
 # LIDER MİNİ PANEL
 # ============================================
 try:
@@ -27,19 +159,29 @@ zarar_yuzde = (zarar / toplam_yatirim) * 100
 panik = maliyet * 0.90
 hedef = maliyet * 1.10
 
-durum_emoji = "🔴" if lider_fiyat <= panik else "🟡" if lider_fiyat < maliyet else "🟢"
+panel_class = "panik" if lider_fiyat <= panik else "zarar" if lider_fiyat < maliyet else "kar"
+panel_emoji = "🔴" if lider_fiyat <= panik else "🟡" if lider_fiyat < maliyet else "🟢"
 
 st.markdown(f"""
-<div style="
-    background: {'#dc3545' if lider_fiyat <= panik else '#ffc107' if lider_fiyat < maliyet else '#28a745'};
-    color: {'white' if lider_fiyat <= panik else 'black'};
-    padding: 10px 15px; border-radius: 8px; margin-bottom: 10px;
-    text-align: center;
-">
-    {durum_emoji} LIDER: <b>{lider_fiyat:.2f} TL</b> | 
-    Maliyet: <b>{maliyet:.2f}</b> | 
-    Zarar: <b>{zarar:,.0f} TL (%{zarar_yuzde:.1f})</b> | 
-    Panik: {panik:.2f} | Hedef: {hedef:.2f}
+<div class="lider-panel {panel_class}">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <div style="font-size: 0.8rem; opacity: 0.8; letter-spacing: 1px;">{panel_emoji} LIDER TAKİP</div>
+            <div style="font-size: 2rem; font-weight: 700;">{lider_fiyat:.2f} <span style="font-size: 1rem;">TL</span></div>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-size: 0.8rem; opacity: 0.8;">Maliyet: {maliyet:.2f} TL</div>
+            <div style="font-size: 1.2rem; font-weight: 600;">Zarar: {zarar:,.0f} TL (%{zarar_yuzde:.1f})</div>
+        </div>
+        <div style="text-align: center;">
+            <div style="font-size: 0.7rem; opacity: 0.7;">PANİK</div>
+            <div style="font-weight: 600;">{panik:.2f}</div>
+        </div>
+        <div style="text-align: center;">
+            <div style="font-size: 0.7rem; opacity: 0.7;">HEDEF</div>
+            <div style="font-weight: 600;">{hedef:.2f}</div>
+        </div>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -192,9 +334,6 @@ with orta:
             for _, row in pd.DataFrame(sonuclar).iterrows():
                 bist_deepseek += f"{row['Hisse']}: {row['Fiyat']:.2f} TL | F/K: {row['F/K']} | PD/DD: {row['PD/DD']}\n"
             
-            # Veriyi session_state'e kaydet
-            st.session_state.bist_veri = bist_deepseek
-            
             st.components.v1.html(f"""
                 <textarea id="bist100Text" style="display:none;">{bist_deepseek}</textarea>
                 <button onclick="
@@ -205,8 +344,6 @@ with orta:
                 " style="width:100%; padding:8px; background:#dc3545; color:white; border:none; border-radius:5px; font-size:13px; font-weight:bold; cursor:pointer;">
                 📋 BIST 100 Kopyala</button>
             """, height=45)
-    
-   
 
 # --- SAĞ: Portföy ---
 with sag:

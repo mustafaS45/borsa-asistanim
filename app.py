@@ -60,7 +60,7 @@ st.caption(f"Son güncelleme: {datetime.now().strftime('%d.%m.%Y %H:%M')}")
 st.markdown("---")
 
 # ============================================
-# VERİ ÇEKME FONKSİYONLARI (Bir kez)
+# VERİ ÇEKME FONKSİYONLARI
 # ============================================
 @st.cache_data(ttl=3600)
 def veri_cek():
@@ -184,8 +184,6 @@ with orta:
             
             progress.empty()
             st.success(f"✅ {len(sonuclar)} hisse")
-                        # Veriyi session_state'e kaydet
-            st.session_state.bist_veri = bist_deepseek
             st.dataframe(pd.DataFrame(sonuclar), use_container_width=True, hide_index=True)
 
             # DeepSeek için BIST 100
@@ -193,6 +191,9 @@ with orta:
             bist_deepseek = "BIST 100 TARAMA:\n"
             for _, row in pd.DataFrame(sonuclar).iterrows():
                 bist_deepseek += f"{row['Hisse']}: {row['Fiyat']:.2f} TL | F/K: {row['F/K']} | PD/DD: {row['PD/DD']}\n"
+            
+            # Veriyi session_state'e kaydet
+            st.session_state.bist_veri = bist_deepseek
             
             st.components.v1.html(f"""
                 <textarea id="bist100Text" style="display:none;">{bist_deepseek}</textarea>
@@ -204,8 +205,8 @@ with orta:
                 " style="width:100%; padding:8px; background:#dc3545; color:white; border:none; border-radius:5px; font-size:13px; font-weight:bold; cursor:pointer;">
                 📋 BIST 100 Kopyala</button>
             """, height=45)
-            
-               # AI Analiz (BIST 100 if'inin DIŞINDA)
+    
+    # AI Analiz (BIST 100 if'inin DIŞINDA)
     st.markdown("---")
     OPENROUTER_KEY = "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"
     
@@ -230,20 +231,6 @@ with orta:
                     st.error(f"Hata: {e}")
         else:
             st.warning("⚠️ Önce BIST 100 Çek butonuna tıkla!")
-                with st.spinner("AI analiz yapıyor..."):
-                    try:
-                        analiz_prompt = f"""Şu BIST 100 hisselerini analiz et. En ucuz 5 hisseyi (F/K ve PD/DD'ye göre), en riskli 3 hisseyi yaz. Kısa olsun.\n{bist_deepseek[:4000]}"""
-                        response = requests.post(
-                            "https://openrouter.ai/api/v1/chat/completions",
-                            headers={"Authorization": f"Bearer {OPENROUTER_KEY}", "Content-Type": "application/json"},
-                            json={"model": "google/gemini-flash-1.5", "messages": [{"role": "user", "content": analiz_prompt}]},
-                            timeout=30
-                        )
-                        analiz = response.json()['choices'][0]['message']['content']
-                        st.success("✅ Analiz hazır!")
-                        st.write(analiz)
-                    except Exception as e:
-                        st.error(f"Hata: {e}")
 
 # --- SAĞ: Portföy ---
 with sag:

@@ -1,7 +1,3 @@
-# Otomatik yenileme (5 dakikada bir)
-st.markdown("""
-<meta http-equiv="refresh" content="300">
-""", unsafe_allow_html=True)
 
 import streamlit as st
 import yfinance as yf
@@ -11,6 +7,13 @@ from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
 import re
+
+# Otomatik yenileme (5 dakikada bir)
+st.markdown("""
+<meta http-equiv="refresh" content="300">
+""", unsafe_allow_html=True)
+
+
 
 st.set_page_config(page_title="Borsa Asistanım", page_icon="📊", layout="wide")
 

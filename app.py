@@ -184,6 +184,8 @@ with orta:
             
             progress.empty()
             st.success(f"✅ {len(sonuclar)} hisse")
+                        # Veriyi session_state'e kaydet
+            st.session_state.bist_veri = bist_deepseek
             st.dataframe(pd.DataFrame(sonuclar), use_container_width=True, hide_index=True)
 
             # DeepSeek için BIST 100
@@ -203,11 +205,31 @@ with orta:
                 📋 BIST 100 Kopyala</button>
             """, height=45)
             
-            # AI Analiz
-            st.markdown("---")
-            OPENROUTER_KEY = "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"
-            
-            if st.button("🧠 AI Analiz Yap", use_container_width=True):
+               # AI Analiz (BIST 100 if'inin DIŞINDA)
+    st.markdown("---")
+    OPENROUTER_KEY = "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"
+    
+    if "bist_veri" not in st.session_state:
+        st.session_state.bist_veri = ""
+    
+    if st.button("🧠 AI Analiz Yap", use_container_width=True):
+        if st.session_state.bist_veri:
+            with st.spinner("AI analiz yapıyor..."):
+                try:
+                    analiz_prompt = f"Şu BIST 100 hisselerini analiz et. En ucuz 5 hisseyi (F/K ve PD/DD'ye göre), en riskli 3 hisseyi yaz. Kısa olsun.\n{st.session_state.bist_veri[:4000]}"
+                    response = requests.post(
+                        "https://openrouter.ai/api/v1/chat/completions",
+                        headers={"Authorization": f"Bearer {OPENROUTER_KEY}", "Content-Type": "application/json"},
+                        json={"model": "google/gemini-flash-1.5", "messages": [{"role": "user", "content": analiz_prompt}]},
+                        timeout=30
+                    )
+                    analiz = response.json()['choices'][0]['message']['content']
+                    st.success("✅ Analiz hazır!")
+                    st.write(analiz)
+                except Exception as e:
+                    st.error(f"Hata: {e}")
+        else:
+            st.warning("⚠️ Önce BIST 100 Çek butonuna tıkla!")
                 with st.spinner("AI analiz yapıyor..."):
                     try:
                         analiz_prompt = f"""Şu BIST 100 hisselerini analiz et. En ucuz 5 hisseyi (F/K ve PD/DD'ye göre), en riskli 3 hisseyi yaz. Kısa olsun.\n{bist_deepseek[:4000]}"""

@@ -74,6 +74,169 @@ with col2:
 st.title("📊 Borsa Asistanım")
 st.caption(f"Son güncelleme: {datetime.now().strftime('%d.%m.%Y %H:%M')}")
 
+st.markdown("---")
+
+# ============================================
+# İKİ SÜTUNLU ANA EKRAN
+# ============================================
+sol, sag = st.columns([1, 1])
+
+# -------------------- SOL SÜTUN --------------------
+with sol:
+    st.subheader("🤖 DeepSeek Analizi İçin")
+    
+    # Veri çekme
+    @st.cache_data(ttl=3600)
+    def veri_cek():
+        v = {}
+        try: v['bist'] = round(yf.Ticker("XU100.IS").history(period="1d")['Close'].iloc[-1], 0)
+        except: v['bist'] = 0
+        try: v['usd'] = round(yf.Ticker("USDTRY=X").history(period="1d")['Close'].iloc[-1], 2)
+        except: v['usd'] = 0
+        try: v['aselsan'] = round(yf.Ticker("ASELS.IS").history(period="1d")['Close'].iloc[-1], 2)
+        except: v['aselsan'] = 0
+        try: v['akbnk'] = round(yf.Ticker("AKBNK.IS").history(period="1d")['Close'].iloc[-1], 2)
+        except: v['akbnk'] = 0
+        try: v['ykbnk'] = round(yf.Ticker("YKBNK.IS").history(period="1d")['Close'].iloc[-1], 2)
+        except: v['ykbnk'] = 0
+        try: v['thy'] = round(yf.Ticker("THYAO.IS").history(period="1d")['Close'].iloc[-1], 2)
+        except: v['thy'] = 0
+        try: v['garan'] = round(yf.Ticker("GARAN.IS").history(period="1d")['Close'].iloc[-1], 2)
+        except: v['garan'] = 0
+        try: v['isctr'] = round(yf.Ticker("ISCTR.IS").history(period="1d")['Close'].iloc[-1], 2)
+        except: v['isctr'] = 0
+        try: v['sise'] = round(yf.Ticker("SISE.IS").history(period="1d")['Close'].iloc[-1], 2)
+        except: v['sise'] = 0
+        try: v['ttkom'] = round(yf.Ticker("TTKOM.IS").history(period="1d")['Close'].iloc[-1], 2)
+        except: v['ttkom'] = 0
+        return v
+    
+    v = veri_cek()
+    
+    # Altın ve faiz (manuel)
+    altin_manual = 6170
+    faiz_manual = 37.0
+    
+    deepseek_metni = f"""BIST: {v['bist']:,.0f}
+USD: {v['usd']:.2f}
+Altın: {altin_manual:,.0f}
+Faiz: %{faiz_manual:.1f}
+ASELSAN: {v['aselsan']:.2f}
+AKBNK: {v['akbnk']:.2f}
+GARAN: {v['garan']:.2f}
+ISCTR: {v['isctr']:.2f}
+THYAO: {v['thy']:.2f}
+YKBNK: {v['ykbnk']:.2f}
+SISE: {v['sise']:.2f}
+TTKOM: {v['ttkom']:.2f}"""
+    
+    st.code(deepseek_metni, language="")
+    
+    st.components.v1.html(f"""
+        <textarea id="deepseekText2" style="display:none;">{deepseek_metni}</textarea>
+        <button onclick="
+            var text = document.getElementById('deepseekText2');
+            text.style.display = 'block';
+            text.select();
+            text.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(text.value).then(function() {{
+                alert('✅ Veriler panoya kopyalandı!');
+            }});
+            text.style.display = 'none';
+        " style="
+            width: 100%;
+            padding: 10px;
+            background: #2a5298;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        ">
+        📋 Panoya Kopyala
+        </button>
+    """, height=50)
+    
+    st.caption("👆 Kopyalayıp DeepSeek sohbetine yapıştırın")
+    
+    # Piyasa özeti
+    st.markdown("---")
+    st.subheader("📈 Piyasa Özeti")
+    c1, c2 = st.columns(2)
+    c1.metric("BIST 100", f"{v['bist']:,.0f}")
+    c2.metric("USD/TRY", f"{v['usd']:.2f} ₺")
+    c1.metric("Gram Altın", f"{altin_manual:,.0f} ₺")
+    c2.metric("Faiz", f"%{faiz_manual:.1f}")
+
+# -------------------- SAĞ SÜTUN --------------------
+with sag:
+    st.subheader("🔍 BIST 100 Detaylı Tarama")
+    
+    if st.button("BIST 100 Verilerini Çek", use_container_width=True):
+        with st.spinner("Taranıyor..."):
+            bist100 = {
+                "AEFES": "AEFES.IS", "AGHOL": "AGHOL.IS", "AKBNK": "AKBNK.IS",
+                "AKFGY": "AKFGY.IS", "AKSA": "AKSA.IS", "ALARK": "ALARK.IS",
+                "ALBRK": "ALBRK.IS", "ALFAS": "ALFAS.IS", "ARCLK": "ARCLK.IS",
+                "ASELS": "ASELS.IS", "ASTOR": "ASTOR.IS", "ASUZU": "ASUZU.IS",
+                "AYGAZ": "AYGAZ.IS", "BAGFS": "BAGFS.IS", "BERA": "BERA.IS",
+                "BIMAS": "BIMAS.IS", "BRSAN": "BRSAN.IS", "BRYAT": "BRYAT.IS",
+                "BUCIM": "BUCIM.IS", "CANTE": "CANTE.IS", "CCOLA": "CCOLA.IS",
+                "CIMSA": "CIMSA.IS", "CWENE": "CWENE.IS", "DOHOL": "DOHOL.IS",
+                "ECILC": "ECILC.IS", "ECZYT": "ECZYT.IS", "EGGUB": "EGGUB.IS",
+                "EKGYO": "EKGYO.IS", "ENJSA": "ENJSA.IS", "ENKAI": "ENKAI.IS",
+                "EREGL": "EREGL.IS", "EUPWR": "EUPWR.IS", "FENER": "FENER.IS",
+                "FROTO": "FROTO.IS", "GARAN": "GARAN.IS", "GESAN": "GESAN.IS",
+                "GOLTS": "GOLTS.IS", "GUBRF": "GUBRF.IS", "HALKB": "HALKB.IS",
+                "HEKTS": "HEKTS.IS", "IPEKE": "IPEKE.IS", "ISCTR": "ISCTR.IS",
+                "ISGYO": "ISGYO.IS", "ISMEN": "ISMEN.IS", "IZENR": "IZENR.IS",
+                "KAYSE": "KAYSE.IS", "KCAER": "KCAER.IS", "KCHOL": "KCHOL.IS",
+                "KLSER": "KLSER.IS", "KONTR": "KONTR.IS", "KONYA": "KONYA.IS",
+                "KOZAA": "KOZAA.IS", "KOZAL": "KOZAL.IS", "KRDMD": "KRDMD.IS",
+                "MAVI": "MAVI.IS", "MGROS": "MGROS.IS", "MIATK": "MIATK.IS",
+                "ODAS": "ODAS.IS", "OTKAR": "OTKAR.IS", "OYAKC": "OYAKC.IS",
+                "PETKM": "PETKM.IS", "PGSUS": "PGSUS.IS", "QUAGR": "QUAGR.IS",
+                "SAHOL": "SAHOL.IS", "SASA": "SASA.IS", "SISE": "SISE.IS",
+                "SKBNK": "SKBNK.IS", "SMRTG": "SMRTG.IS", "SOKM": "SOKM.IS",
+                "TATEN": "TATEN.IS", "TAVHL": "TAVHL.IS", "TCELL": "TCELL.IS",
+                "THYAO": "THYAO.IS", "TKFEN": "TKFEN.IS", "TOASO": "TOASO.IS",
+                "TSKB": "TSKB.IS", "TTKOM": "TTKOM.IS", "TTRAK": "TTRAK.IS",
+                "TUKAS": "TUKAS.IS", "TUPRS": "TUPRS.IS", "ULKER": "ULKER.IS",
+                "VAKBN": "VAKBN.IS", "VESTL": "VESTL.IS", "YATAS": "YATAS.IS",
+                "YGGYO": "YGGYO.IS", "YKBNK": "YKBNK.IS", "ZOREN": "ZOREN.IS"
+            }
+            
+            sonuclar = []
+            progress = st.progress(0)
+            toplam = len(bist100)
+            
+            for i, (isim, sembol) in enumerate(bist100.items()):
+                try:
+                    hisse = yf.Ticker(sembol)
+                    info = hisse.info
+                    fiyat = round(hisse.history(period="1d")['Close'].iloc[-1], 2)
+                    prev = hisse.history(period="5d")['Close'].iloc[-2]
+                    degisim = round(((fiyat - prev) / prev) * 100, 2)
+                    
+                    sonuclar.append({
+                        "Hisse": isim,
+                        "Fiyat": fiyat,
+                        "Değişim %": degisim,
+                        "F/K": info.get("trailingPE", "-"),
+                        "PD/DD": info.get("priceToBook", "-")
+                    })
+                except:
+                    pass
+                progress.progress((i + 1) / toplam)
+            
+            progress.empty()
+            df_bist = pd.DataFrame(sonuclar)
+            st.success(f"✅ {len(df_bist)} hisse tarandı!")
+            st.dataframe(df_bist, use_container_width=True, hide_index=True)
+
+st.markdown("---")
+
 # ------------------------------------------------------------
 # INVESTING.COM'DAN VERİ ÇEKME
 # ------------------------------------------------------------

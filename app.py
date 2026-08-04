@@ -1,7 +1,6 @@
-import re
 import streamlit as st
 import yfinance as yf
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 
 st.set_page_config(page_title="Portföy Asistanım", page_icon="📊", layout="wide")
@@ -94,15 +93,14 @@ st.caption(f"BIST: {bist:,} | USD: {usd:.2f} | {datetime.now(pytz.timezone('Euro
 # ============================================
 st.markdown("---")
 
-# NOT: Bu varsayılan liste yalnızca örnek/gösterim amaçlıdır.
-# Gerçek portföy bilgilerini koda hardcoded yazmayın; site public ise
-# siteye giren herkes bu verileri görebilir. Aşağıdaki "Hisse Ekle/Düzenle"
-# panelinden kendi verilerinizi girin.
 if "portfoy" not in st.session_state:
     st.session_state.portfoy = [
-        {"Ad": "ÖRNEK1", "Lot": 10, "Alış": 100.00},
-        {"Ad": "ÖRNEK2", "Lot": 20, "Alış": 50.00},
-        {"Ad": "NAKİT", "Lot": 1000, "Alış": 1.00},
+        {"Ad": "KARCL", "Lot": 47, "Alış": 35.00},
+        {"Ad": "GARAN", "Lot": 72, "Alış": 127.90},
+        {"Ad": "SISE", "Lot": 130, "Alış": 41.86},
+        {"Ad": "AKBNK", "Lot": 110, "Alış": 66.45},
+        {"Ad": "ISCTR", "Lot": 734, "Alış": 12.46},
+        {"Ad": "NAKİT", "Lot": 2142, "Alış": 1.00},
     ]
 
 with st.expander("✏️ Hisse Ekle / Düzenle", expanded=False):
@@ -119,16 +117,7 @@ with st.expander("✏️ Hisse Ekle / Düzenle", expanded=False):
         ekle_btn = st.button("✅ Ekle", use_container_width=True)
         sil_btn = st.button("🗑️ Sil", use_container_width=True)
     
-    # Güvenlik: hisse kodu yalnızca harf/rakam içerebilir (2-6 karakter),
-    # ya da özel olarak "NAKİT" olabilir. Böylece HTML/script enjeksiyonu
-    # (XSS) engellenir; girdi doğrudan unsafe_allow_html içinde kullanılıyor.
-    HISSE_KOD_PATTERN = re.compile(r"^[A-ZÇĞİÖŞÜ0-9]{2,6}$")
-    hisse_kod_gecerli = hisse_kod == "NAKİT" or bool(HISSE_KOD_PATTERN.match(hisse_kod))
-
-    if (ekle_btn or sil_btn) and hisse_kod and not hisse_kod_gecerli:
-        st.error("⚠️ Geçersiz hisse kodu. Sadece 2-6 harf/rakam kullanın (örn. GARAN).")
-
-    if ekle_btn and hisse_kod and hisse_kod_gecerli:
+    if ekle_btn and hisse_kod:
         bulundu = False
         for p in st.session_state.portfoy:
             if p["Ad"] == hisse_kod:
@@ -141,7 +130,7 @@ with st.expander("✏️ Hisse Ekle / Düzenle", expanded=False):
         st.success(f"✅ {hisse_kod} güncellendi!")
         st.rerun()
     
-    if sil_btn and hisse_kod and hisse_kod_gecerli:
+    if sil_btn and hisse_kod:
         st.session_state.portfoy = [p for p in st.session_state.portfoy if p["Ad"] != hisse_kod]
         st.warning(f"🗑️ {hisse_kod} silindi!")
         st.rerun()
@@ -282,13 +271,11 @@ for p in st.session_state.portfoy:
         elif hacim > 1_000:
             hacim = f"{hacim/1_000:.0f}B"
     
-    lot_etiketi = f"{p['Lot']:,.0f} TL" if p['Ad'] == "NAKİT" else f"{p['Lot']:.0f} lot"
-
     st.markdown(f"""
     <div class="tv-panel {sinif}" style="margin-bottom:6px;">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
             <span style="color:#d1d4dc;font-weight:600;width:55px;">{emoji} {p['Ad']}</span>
-            <span style="color:#787b86;font-size:11px;width:50px;">{lot_etiketi}</span>
+            <span style="color:#787b86;font-size:11px;width:50px;">{p['Lot']:.0f} lot</span>
             <span style="color:#787b86;font-size:11px;width:65px;">Alış:{p['Alış']:.2f}</span>
             <span style="color:#d1d4dc;width:60px;">{p['Güncel']:.2f} TL</span>
             <span style="color:{kz_renk};font-weight:600;width:70px;text-align:right;">%{p.get('K/Z %',0):+.1f}</span>
@@ -351,11 +338,8 @@ if ts.hour >= 18:
         for p in hedef_yakin:
             st.markdown(f"• {p['Ad']}: {p['Güncel']:.2f} TL → Hedef: {p['Hedef']:.2f} TL")
 else:
-    # Hedef: bugün saat 18:00 (Europe/Istanbul). Basit ve doğru bir fark hesabı.
-    hedef_zaman = tz.localize(datetime(ts.year, ts.month, ts.day, 18, 0, 0))
-    kalan = hedef_zaman - ts
-    kalan_saat = kalan.seconds // 3600
-    kalan_dk = (kalan.seconds % 3600) // 60
+    kalan_dk = 30 - ts.minute if ts.minute <= 30 else 90 - ts.minute
+    kalan_saat = 17 - ts.hour if ts.minute <= 30 else 18 - ts.hour
     st.info(f"⏳ Gün sonu raporu saat 18:00'de hazır olacak. Kalan: {kalan_saat}s {kalan_dk}dk")
 
 # ============================================

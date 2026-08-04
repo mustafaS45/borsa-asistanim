@@ -72,7 +72,6 @@ st.caption(f"BIST: {bist:,} | USD: {usd:.2f} | {datetime.now(pytz.timezone('Euro
 st.markdown("---")
 st.subheader("💼 Portföyüm")
 
-# Başlangıç portföyü
 if "portfoy" not in st.session_state:
     st.session_state.portfoy = [
         {"Ad": "KARCL", "Lot": 47, "Alış": 35.00},
@@ -83,7 +82,6 @@ if "portfoy" not in st.session_state:
         {"Ad": "NAKİT", "Lot": 2142, "Alış": 1.00},
     ]
 
-# Düzenleme
 with st.expander("✏️ Portföyü Düzenle"):
     yeni = st.text_area("Hisse, Lot, Alış (alt alta)", 
         value="KARCL,47,35.00\nGARAN,72,127.90\nSISE,130,41.86\nAKBNK,110,66.45\nISCTR,734,12.46\nNAKİT,2142,1.00",
@@ -184,7 +182,21 @@ for p in st.session_state.portfoy:
     ds_metin += f"{p['Ad']}: Lot={p['Lot']:.0f} Alış={p['Alış']:.2f} Güncel={p['Güncel']:.2f} K/Z=%{p.get('K/Z %',0):+.1f}\n"
 
 st.code(ds_metin, language="")
-st.download_button("📋 Veriyi İndir", ds_metin, "portfoy.txt")
+
+# Panoya kopyala butonu
+st.components.v1.html(f"""
+    <textarea id="dsText" style="display:none;">{ds_metin}</textarea>
+    <button onclick="
+        var t = document.getElementById('dsText');
+        t.style.display='block'; t.select();
+        navigator.clipboard.writeText(t.value);
+        t.style.display='none';
+    " style="width:100%;padding:10px;background:#2962ff;color:white;border:none;border-radius:4px;font-size:14px;font-weight:500;cursor:pointer;">
+    📋 PANOYA KOPYALA
+    </button>
+""", height=50)
+
+st.caption("👆 Tıkla, DeepSeek sohbetine yapıştır (Ctrl+V)")
 
 st.markdown("---")
 st.caption("⚠️ Yatırım tavsiyesi değildir.")

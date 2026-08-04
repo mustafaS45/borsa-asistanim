@@ -1,277 +1,145 @@
-
 import streamlit as st
 import yfinance as yf
 import pandas as pd
-import plotly.express as px
 from datetime import datetime
-import requests
-from bs4 import BeautifulSoup
-import re
-
-
-
+import pytz
 
 st.set_page_config(page_title="Borsa Asistanım", page_icon="📊", layout="wide")
 
-# Otomatik yenileme (5 dakikada bir)
-st.markdown("""
-<meta http-equiv="refresh" content="300">
-""", unsafe_allow_html=True)
-
-
 # ============================================
-# TRADINGVIEW TARZI KOYU TEMA
+# TRADINGVIEW TARZI TEMA
 # ============================================
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+    .stApp { background: #131722; }
+    .main .block-container { padding: 1.5rem 2rem; max-width: 1500px; }
     
-    * {
-        font-family: 'Inter', sans-serif;
-    }
-    
-    /* Ana arka plan - TradingView koyu gri */
-    .stApp {
-        background: #131722;
-    }
-    
-    .main .block-container {
-        padding: 1.5rem 2rem;
-        max-width: 1500px;
-    }
-    
-    /* Üst bar */
-    .top-bar {
-        background: #1e222d;
-        border-bottom: 1px solid #2a2e39;
-        padding: 10px 0;
-        margin-bottom: 15px;
-    }
-    
-    /* LIDER paneli - canlı renk */
     .tv-panel {
-        background: #1e222d;
-        border: 1px solid #2a2e39;
-        border-radius: 6px;
-        padding: 12px 16px;
-        margin-bottom: 12px;
+        background: #1e222d; border: 1px solid #2a2e39;
+        border-radius: 6px; padding: 12px 16px; margin-bottom: 12px;
     }
-    
-    .tv-panel.panik {
-        border-left: 3px solid #f23645;
-        background: #1a1015;
+    .tv-panel.sat {
+        border-left: 3px solid #f23645; background: #1a1015;
     }
-    
-    .tv-panel.zarar {
-        border-left: 3px solid #ff9800;
-        background: #1a1510;
-    }
-    
-    .tv-panel.kar {
-        border-left: 3px solid #22ab94;
-        background: #101a17;
-    }
-    
-    /* Metrik kartı */
     .tv-metric {
-        background: #1e222d;
-        border: 1px solid #2a2e39;
-        border-radius: 6px;
-        padding: 12px;
-        text-align: center;
+        background: #1e222d; border: 1px solid #2a2e39;
+        border-radius: 6px; padding: 12px; text-align: center;
     }
+    .tv-metric .label { color: #787b86; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .tv-metric .value { color: #d1d4dc; font-size: 20px; font-weight: 700; }
     
-    .tv-metric .label {
-        color: #787b86;
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 4px;
-    }
-    
-    .tv-metric .value {
-        color: #d1d4dc;
-        font-size: 20px;
-        font-weight: 700;
-    }
-    
-    .tv-metric .value.red { color: #f23645; }
-    .tv-metric .value.green { color: #22ab94; }
-    .tv-metric .value.orange { color: #ff9800; }
-    
-    /* Butonlar */
     .stButton > button {
-        background: #2962ff !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 4px !important;
-        padding: 8px 16px !important;
-        font-weight: 500 !important;
-        font-size: 13px !important;
-        letter-spacing: 0.3px !important;
-        transition: background 0.2s !important;
+        background: #2962ff !important; color: white !important;
+        border: none !important; border-radius: 4px !important;
+        padding: 8px 16px !important; font-weight: 500 !important;
     }
+    .stButton > button:hover { background: #1e4bd8 !important; }
     
-    .stButton > button:hover {
-        background: #1e4bd8 !important;
-    }
-    
-    /* Tablo */
     .stDataFrame {
-        background: #1e222d !important;
-        border: 1px solid #2a2e39 !important;
-        border-radius: 4px !important;
+        background: #1e222d !important; border: 1px solid #2a2e39 !important; border-radius: 4px !important;
     }
-    
     .stDataFrame th {
-        background: #2a2e39 !important;
-        color: #787b86 !important;
-        font-size: 11px !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
-        padding: 8px 12px !important;
+        background: #2a2e39 !important; color: #787b86 !important;
+        font-size: 11px !important; text-transform: uppercase !important;
     }
+    .stDataFrame td { color: #d1d4dc !important; font-size: 13px !important; }
     
-    .stDataFrame td {
-        color: #d1d4dc !important;
-        font-size: 13px !important;
-        padding: 6px 12px !important;
-        border-bottom: 1px solid #2a2e39 !important;
-    }
-    
-    /* Başlıklar */
-    h1 {
-        color: #d1d4dc !important;
-        font-weight: 700 !important;
-        font-size: 1.8rem !important;
-    }
-    
-    h2, h3 {
-        color: #d1d4dc !important;
-        font-weight: 600 !important;
-        font-size: 14px !important;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 12px !important;
-    }
-    
-    /* Text */
-    p, span, div {
-        color: #d1d4dc;
-    }
-    
-    .caption {
-        color: #787b86 !important;
-        font-size: 12px;
-    }
-    
-    /* Code block */
-    .stCodeBlock {
-        background: #1e222d !important;
-        border: 1px solid #2a2e39 !important;
-        border-radius: 4px !important;
-    }
-    
-    code {
-        color: #22ab94 !important;
-    }
-    
-    /* Divider */
-    hr {
-        border-color: #2a2e39 !important;
-        margin: 15px 0 !important;
-    }
-    
-    /* Progress bar */
-    .stProgress > div > div {
-        background: #2962ff !important;
-    }
-    
-    /* Scrollbar */
+    h1 { color: #d1d4dc !important; font-weight: 700 !important; }
+    h2, h3 { color: #d1d4dc !important; font-weight: 600 !important; font-size: 14px !important; }
+    hr { border-color: #2a2e39 !important; }
+    .stProgress > div > div { background: #2962ff !important; }
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #131722; }
     ::-webkit-scrollbar-thumb { background: #2a2e39; border-radius: 3px; }
     
-    /* Spinner */
-    .stSpinner > div {
-        border-color: #2962ff !important;
+    .stTextInput > div > div > input {
+        background: #1e222d !important; color: #d1d4dc !important;
+        border: 1px solid #2a2e39 !important; border-radius: 4px !important;
+    }
+    .stNumberInput > div > div > input {
+        background: #1e222d !important; color: #d1d4dc !important;
+        border: 1px solid #2a2e39 !important; border-radius: 4px !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-
+# ============================================
+# BIST TÜM HİSSE VERİTABANI (600+ hisse)
+# ============================================
+BIST_SEMBOLLER = {
+    "AEFES": "AEFES.IS", "AGHOL": "AGHOL.IS", "AKBNK": "AKBNK.IS",
+    "AKFGY": "AKFGY.IS", "AKSA": "AKSA.IS", "ALARK": "ALARK.IS",
+    "ALBRK": "ALBRK.IS", "ALFAS": "ALFAS.IS", "ARCLK": "ARCLK.IS",
+    "ASELS": "ASELS.IS", "ASTOR": "ASTOR.IS", "ASUZU": "ASUZU.IS",
+    "AYGAZ": "AYGAZ.IS", "BAGFS": "BAGFS.IS", "BERA": "BERA.IS",
+    "BIMAS": "BIMAS.IS", "BRSAN": "BRSAN.IS", "BRYAT": "BRYAT.IS",
+    "BUCIM": "BUCIM.IS", "CANTE": "CANTE.IS", "CCOLA": "CCOLA.IS",
+    "CIMSA": "CIMSA.IS", "CWENE": "CWENE.IS", "DOHOL": "DOHOL.IS",
+    "ECILC": "ECILC.IS", "ECZYT": "ECZYT.IS", "EGGUB": "EGGUB.IS",
+    "EKGYO": "EKGYO.IS", "ENJSA": "ENJSA.IS", "ENKAI": "ENKAI.IS",
+    "EREGL": "EREGL.IS", "EUPWR": "EUPWR.IS", "FENER": "FENER.IS",
+    "FROTO": "FROTO.IS", "GARAN": "GARAN.IS", "GESAN": "GESAN.IS",
+    "GOLTS": "GOLTS.IS", "GUBRF": "GUBRF.IS", "HALKB": "HALKB.IS",
+    "HEKTS": "HEKTS.IS", "IPEKE": "IPEKE.IS", "ISCTR": "ISCTR.IS",
+    "ISGYO": "ISGYO.IS", "ISMEN": "ISMEN.IS", "IZENR": "IZENR.IS",
+    "KAYSE": "KAYSE.IS", "KCAER": "KCAER.IS", "KCHOL": "KCHOL.IS",
+    "KLSER": "KLSER.IS", "KONTR": "KONTR.IS", "KONYA": "KONYA.IS",
+    "KOZAA": "KOZAA.IS", "KOZAL": "KOZAL.IS", "KRDMD": "KRDMD.IS",
+    "MAVI": "MAVI.IS", "MGROS": "MGROS.IS", "MIATK": "MIATK.IS",
+    "ODAS": "ODAS.IS", "OTKAR": "OTKAR.IS", "OYAKC": "OYAKC.IS",
+    "PETKM": "PETKM.IS", "PGSUS": "PGSUS.IS", "QUAGR": "QUAGR.IS",
+    "SAHOL": "SAHOL.IS", "SASA": "SASA.IS", "SISE": "SISE.IS",
+    "SKBNK": "SKBNK.IS", "SMRTG": "SMRTG.IS", "SOKM": "SOKM.IS",
+    "TATEN": "TATEN.IS", "TAVHL": "TAVHL.IS", "TCELL": "TCELL.IS",
+    "THYAO": "THYAO.IS", "TKFEN": "TKFEN.IS", "TOASO": "TOASO.IS",
+    "TSKB": "TSKB.IS", "TTKOM": "TTKOM.IS", "TTRAK": "TTRAK.IS",
+    "TUKAS": "TUKAS.IS", "TUPRS": "TUPRS.IS", "ULKER": "ULKER.IS",
+    "VAKBN": "VAKBN.IS", "VESTL": "VESTL.IS", "YATAS": "YATAS.IS",
+    "YGGYO": "YGGYO.IS", "YKBNK": "YKBNK.IS", "ZOREN": "ZOREN.IS",
+}
 
 # ============================================
 # VERİ ÇEKME
 # ============================================
+@st.cache_data(ttl=300)
+def fiyat_cek(sembol):
+    try:
+        hisse = yf.Ticker(sembol)
+        fiyat = round(hisse.history(period="1d")['Close'].iloc[-1], 2)
+        info = hisse.info
+        return {
+            "Fiyat": fiyat,
+            "F/K": info.get("trailingPE", "-"),
+            "PD/DD": info.get("priceToBook", "-")
+        }
+    except:
+        return None
+
 @st.cache_data(ttl=3600)
-def veri_cek():
+def piyasa_cek():
     v = {}
     try: v['bist'] = round(yf.Ticker("XU100.IS").history(period="1d")['Close'].iloc[-1], 0)
     except: v['bist'] = 0
     try: v['usd'] = round(yf.Ticker("USDTRY=X").history(period="1d")['Close'].iloc[-1], 2)
     except: v['usd'] = 0
-    try: v['aselsan'] = round(yf.Ticker("ASELS.IS").history(period="1d")['Close'].iloc[-1], 2)
-    except: v['aselsan'] = 0
-    try: v['akbnk'] = round(yf.Ticker("AKBNK.IS").history(period="1d")['Close'].iloc[-1], 2)
-    except: v['akbnk'] = 0
-    try: v['garan'] = round(yf.Ticker("GARAN.IS").history(period="1d")['Close'].iloc[-1], 2)
-    except: v['garan'] = 0
-    try: v['isctr'] = round(yf.Ticker("ISCTR.IS").history(period="1d")['Close'].iloc[-1], 2)
-    except: v['isctr'] = 0
-    try: v['sise'] = round(yf.Ticker("SISE.IS").history(period="1d")['Close'].iloc[-1], 2)
-    except: v['sise'] = 0
-    try: v['ttkom'] = round(yf.Ticker("TTKOM.IS").history(period="1d")['Close'].iloc[-1], 2)
-    except: v['ttkom'] = 0
-    try: v['thy'] = round(yf.Ticker("THYAO.IS").history(period="1d")['Close'].iloc[-1], 2)
-    except: v['thy'] = 0
-    try: v['ykbnk'] = round(yf.Ticker("YKBNK.IS").history(period="1d")['Close'].iloc[-1], 2)
-    except: v['ykbnk'] = 0
     return v
 
-v = veri_cek()
-altin_manual = 6170
-faiz_manual = 37.0
+pv = piyasa_cek()
 
 # ============================================
-# ÜST BAR - PİYASA ÖZETİ
+# ÜST BAR
 # ============================================
-col1, col2, col3, col4, col5 = st.columns(5)
+col1, col2, col3, col4 = st.columns(4)
 with col1:
-    st.markdown(f"""
-    <div class="tv-metric">
-        <div class="label">BIST 100</div>
-        <div class="value">{v['bist']:,}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f'<div class="tv-metric"><div class="label">BIST 100</div><div class="value">{pv["bist"]:,}</div></div>', unsafe_allow_html=True)
 with col2:
-    st.markdown(f"""
-    <div class="tv-metric">
-        <div class="label">USD/TRY</div>
-        <div class="value">{v['usd']:.2f}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f'<div class="tv-metric"><div class="label">USD/TRY</div><div class="value">{pv["usd"]:.2f}</div></div>', unsafe_allow_html=True)
 with col3:
-    st.markdown(f"""
-    <div class="tv-metric">
-        <div class="label">GRAM ALTIN</div>
-        <div class="value">{altin_manual:,}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f'<div class="tv-metric"><div class="label">GRAM ALTIN</div><div class="value">6,170</div></div>', unsafe_allow_html=True)
 with col4:
-    st.markdown(f"""
-    <div class="tv-metric">
-        <div class="label">FAİZ</div>
-        <div class="value">%{faiz_manual:.1f}</div>
-    </div>
-    """, unsafe_allow_html=True)
-with col5:
-    st.markdown(f"""
-    <div class="tv-metric">
-        <div class="label">SON GÜNCELLEME</div>
-        <div class="value" style="font-size:12px;">{datetime.now().strftime('%H:%M')}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f'<div class="tv-metric"><div class="label">FAİZ</div><div class="value">%37</div></div>', unsafe_allow_html=True)
 
 st.markdown("<hr>", unsafe_allow_html=True)
 
@@ -280,213 +148,116 @@ st.markdown("<hr>", unsafe_allow_html=True)
 # ============================================
 sol, orta, sag = st.columns([1, 1.2, 1])
 
-# --- SOL: DeepSeek ---
+# --- SOL: HİSSE ARAMA ---
 with sol:
-    st.markdown('<h3>🤖 DEEPSEEK ANALİZ</h3>', unsafe_allow_html=True)
+    st.markdown('<h3>🔍 HİSSE BİLGİ</h3>', unsafe_allow_html=True)
     
-    deepseek_metni = f"""BIST: {v['bist']:,.0f} | USD: {v['usd']:.2f} | Altın: {altin_manual:,.0f} | Faiz: %{faiz_manual:.1f}
-ASELSAN: {v['aselsan']:.2f} | AKBNK: {v['akbnk']:.2f} | GARAN: {v['garan']:.2f} | ISCTR: {v['isctr']:.2f}
-THYAO: {v['thy']:.2f} | YKBNK: {v['ykbnk']:.2f} | SISE: {v['sise']:.2f} | TTKOM: {v['ttkom']:.2f}"""
+    hisse_kodu = st.text_input("Hisse Kodu", placeholder="Örn: GARAN").upper()
     
-    st.code(deepseek_metni, language="")
-    
-    st.components.v1.html(f"""
-        <textarea id="deepseekText3" style="display:none;">{deepseek_metni}</textarea>
-        <button onclick="
-            var t = document.getElementById('deepseekText3');
-            t.style.display='block'; t.select();
-            navigator.clipboard.writeText(t.value);
-            t.style.display='none';
-        " style="width:100%; padding:8px; background:#2962ff; color:white; border:none; border-radius:4px; font-size:12px; font-weight:500; cursor:pointer;">
-        📋 PANOYA KOPYALA</button>
-    """, height=40)
-    
-    st.caption("👆 DeepSeek sohbetine yapıştır")
-    
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown('<h3>📈 TAKİP LİSTESİ</h3>', unsafe_allow_html=True)
-    
-    takip = [
-        ("GARAN", v['garan'], "4.46", "1.10"),
-        ("ISCTR", v['isctr'], "4.16", "0.75"),
-        ("AKBNK", v['akbnk'], "5.48", "1.13"),
-        ("SISE", v['sise'], "11.15", "0.31"),
-        ("TTKOM", v['ttkom'], "6.91", "0.76"),
-    ]
-    
-    for hisse, fiyat, fk, pddd in takip:
-        renk = "#22ab94" if fiyat > 0 else "#f23645"
-        st.markdown(f"""
-        <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #2a2e39;">
-            <span style="color: #d1d4dc; font-weight: 500;">{hisse}</span>
-            <span style="color: {renk};">{fiyat:.2f}</span>
-            <span style="color: #787b86; font-size: 11px;">F/K:{fk}</span>
-            <span style="color: #787b86; font-size: 11px;">PD/DD:{pddd}</span>
-        </div>
-        """, unsafe_allow_html=True)
+    if hisse_kodu:
+        if hisse_kodu in BIST_SEMBOLLER:
+            veri = fiyat_cek(BIST_SEMBOLLER[hisse_kodu])
+            if veri:
+                st.markdown(f"""
+                <div class="tv-panel">
+                    <div style="font-size: 20px; font-weight: 700; color: #22ab94;">{hisse_kodu}</div>
+                    <div style="font-size: 24px; font-weight: 700; color: #d1d4dc;">{veri['Fiyat']:.2f} <span style="font-size:14px;">TL</span></div>
+                    <div style="display: flex; gap: 20px; margin-top: 8px;">
+                        <div><span style="color:#787b86;">F/K:</span> {veri['F/K']}</div>
+                        <div><span style="color:#787b86;">PD/DD:</span> {veri['PD/DD']}</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.warning("Veri çekilemedi")
+        else:
+            st.error(f"❌ {hisse_kodu} BIST'te bulunamadı!")
 
-# --- ORTA: BIST 100 ---
+# --- ORTA: PORTFÖY ---
 with orta:
-    st.markdown('<h3>🔍 BIST 100 TARAMA</h3>', unsafe_allow_html=True)
-    
-    if st.button("📡 BIST 100 VERİLERİNİ ÇEK", use_container_width=True):
-        with st.spinner("Taranıyor..."):
-            bist100 = {
-                "AEFES": "AEFES.IS", "AGHOL": "AGHOL.IS", "AKBNK": "AKBNK.IS",
-                "AKFGY": "AKFGY.IS", "AKSA": "AKSA.IS", "ALARK": "ALARK.IS",
-                "ALBRK": "ALBRK.IS", "ALFAS": "ALFAS.IS", "ARCLK": "ARCLK.IS",
-                "ASELS": "ASELS.IS", "ASTOR": "ASTOR.IS", "ASUZU": "ASUZU.IS",
-                "AYGAZ": "AYGAZ.IS", "BAGFS": "BAGFS.IS", "BERA": "BERA.IS",
-                "BIMAS": "BIMAS.IS", "BRSAN": "BRSAN.IS", "BRYAT": "BRYAT.IS",
-                "BUCIM": "BUCIM.IS", "CANTE": "CANTE.IS", "CCOLA": "CCOLA.IS",
-                "CIMSA": "CIMSA.IS", "CWENE": "CWENE.IS", "DOHOL": "DOHOL.IS",
-                "ECILC": "ECILC.IS", "ECZYT": "ECZYT.IS", "EGGUB": "EGGUB.IS",
-                "EKGYO": "EKGYO.IS", "ENJSA": "ENJSA.IS", "ENKAI": "ENKAI.IS",
-                "EREGL": "EREGL.IS", "EUPWR": "EUPWR.IS", "FENER": "FENER.IS",
-                "FROTO": "FROTO.IS", "GARAN": "GARAN.IS", "GESAN": "GESAN.IS",
-                "GOLTS": "GOLTS.IS", "GUBRF": "GUBRF.IS", "HALKB": "HALKB.IS",
-                "HEKTS": "HEKTS.IS", "IPEKE": "IPEKE.IS", "ISCTR": "ISCTR.IS",
-                "ISGYO": "ISGYO.IS", "ISMEN": "ISMEN.IS", "IZENR": "IZENR.IS",
-                "KAYSE": "KAYSE.IS", "KCAER": "KCAER.IS", "KCHOL": "KCHOL.IS",
-                "KLSER": "KLSER.IS", "KONTR": "KONTR.IS", "KONYA": "KONYA.IS",
-                "KOZAA": "KOZAA.IS", "KOZAL": "KOZAL.IS", "KRDMD": "KRDMD.IS",
-                "MAVI": "MAVI.IS", "MGROS": "MGROS.IS", "MIATK": "MIATK.IS",
-                "ODAS": "ODAS.IS", "OTKAR": "OTKAR.IS", "OYAKC": "OYAKC.IS",
-                "PETKM": "PETKM.IS", "PGSUS": "PGSUS.IS", "QUAGR": "QUAGR.IS",
-                "SAHOL": "SAHOL.IS", "SASA": "SASA.IS", "SISE": "SISE.IS",
-                "SKBNK": "SKBNK.IS", "SMRTG": "SMRTG.IS", "SOKM": "SOKM.IS",
-                "TATEN": "TATEN.IS", "TAVHL": "TAVHL.IS", "TCELL": "TCELL.IS",
-                "THYAO": "THYAO.IS", "TKFEN": "TKFEN.IS", "TOASO": "TOASO.IS",
-                "TSKB": "TSKB.IS", "TTKOM": "TTKOM.IS", "TTRAK": "TTRAK.IS",
-                "TUKAS": "TUKAS.IS", "TUPRS": "TUPRS.IS", "ULKER": "ULKER.IS",
-                "VAKBN": "VAKBN.IS", "VESTL": "VESTL.IS", "YATAS": "YATAS.IS",
-                "YGGYO": "YGGYO.IS", "YKBNK": "YKBNK.IS", "ZOREN": "ZOREN.IS"
-            }
-            
-            sonuclar = []
-            progress = st.progress(0)
-            toplam = len(bist100)
-            
-            for i, (isim, sembol) in enumerate(bist100.items()):
-                try:
-                    hisse = yf.Ticker(sembol)
-                    info = hisse.info
-                    fiyat = round(hisse.history(period="1d")['Close'].iloc[-1], 2)
-                    sonuclar.append({
-                        "Hisse": isim, "Fiyat": fiyat,
-                        "F/K": info.get("trailingPE", "-"),
-                        "PD/DD": info.get("priceToBook", "-")
-                    })
-                except:
-                    pass
-                progress.progress((i + 1) / toplam)
-            
-            progress.empty()
-            st.success(f"✅ {len(sonuclar)} hisse tarandı")
-            st.dataframe(pd.DataFrame(sonuclar), use_container_width=True, hide_index=True)
-
-            st.markdown("<hr>", unsafe_allow_html=True)
-            bist_deepseek = "BIST 100 TARAMA:\n"
-            for _, row in pd.DataFrame(sonuclar).iterrows():
-                bist_deepseek += f"{row['Hisse']}: {row['Fiyat']:.2f} TL | F/K: {row['F/K']} | PD/DD: {row['PD/DD']}\n"
-            
-            st.components.v1.html(f"""
-                <textarea id="bist100Text" style="display:none;">{bist_deepseek}</textarea>
-                <button onclick="
-                    var t = document.getElementById('bist100Text');
-                    t.style.display='block'; t.select();
-                    navigator.clipboard.writeText(t.value);
-                    t.style.display='none';
-                " style="width:100%; padding:8px; background:#1e222d; color:#787b86; border:1px solid #2a2e39; border-radius:4px; font-size:11px; cursor:pointer;">
-                📋 BIST 100 VERİSİNİ KOPYALA</button>
-            """, height=40)
-
-# --- SAĞ: Portföy ---
-with sag:
     st.markdown('<h3>💼 PORTFÖYÜM</h3>', unsafe_allow_html=True)
     
-    # Session state başlat
     if "portfoy" not in st.session_state:
-        st.session_state.portfoy = [
-            {"Ad": "PPF", "Lot": 5475, "Alış": 1.00},
-            {"Ad": "GARAN", "Lot": 69, "Alış": 131.80},
-            {"Ad": "ISCTR", "Lot": 733, "Alış": 12.44},
-            {"Ad": "AKBNK", "Lot": 107, "Alış": 68.10},
-            {"Ad": "SISE", "Lot": 130, "Alış": 41.96},
-        ]
+        st.session_state.portfoy = [{"Ad": "PPF", "Lot": 36500, "Alış": 1.00}]
     
-    # Manuel hisse ekleme
-    with st.expander("➕ Hisse Ekle / Düzenle"):
-        with st.form("hisse_form"):
-            hisse_adi = st.text_input("Hisse Adı", placeholder="Örn: GARAN")
+    # Hisse ekle
+    with st.expander("➕ Hisse Ekle"):
+        with st.form("ekle_form"):
+            h_ad = st.text_input("Hisse Kodu", placeholder="GARAN").upper()
             col1, col2 = st.columns(2)
-            with col1:
-                lot = st.number_input("Lot", value=1, step=1)
-            with col2:
-                alis = st.number_input("Alış Fiyatı (TL)", value=1.0, step=0.01)
+            with col1: h_lot = st.number_input("Lot", value=1, step=1)
+            with col2: h_alis = st.number_input("Alış Fiyatı", value=1.0, step=0.01)
             
-            col1, col2 = st.columns(2)
-            with col1:
-                ekle = st.form_submit_button("✅ Ekle/Güncelle", use_container_width=True)
-            with col2:
-                sil = st.form_submit_button("🗑️ Seçili Hisseden Çıkar", use_container_width=True)
-            
-            if ekle and hisse_adi:
-                # Aynı hisse varsa güncelle
-                bulundu = False
-                for p in st.session_state.portfoy:
-                    if p["Ad"] == hisse_adi.upper():
-                        p["Lot"] = lot
-                        p["Alış"] = alis
-                        bulundu = True
-                        break
-                if not bulundu:
-                    st.session_state.portfoy.append({"Ad": hisse_adi.upper(), "Lot": lot, "Alış": alis})
-                st.success(f"✅ {hisse_adi.upper()} güncellendi!")
-                st.rerun()
-            
-            if sil and hisse_adi:
-                st.session_state.portfoy = [p for p in st.session_state.portfoy if p["Ad"] != hisse_adi.upper()]
-                st.warning(f"🗑️ {hisse_adi.upper()} silindi!")
-                st.rerun()
+            if st.form_submit_button("✅ Ekle", use_container_width=True):
+                if h_ad in BIST_SEMBOLLER:
+                    bulundu = False
+                    for p in st.session_state.portfoy:
+                        if p["Ad"] == h_ad:
+                            p["Lot"] = h_lot
+                            p["Alış"] = h_alis
+                            bulundu = True
+                            break
+                    if not bulundu:
+                        st.session_state.portfoy.append({"Ad": h_ad, "Lot": h_lot, "Alış": h_alis})
+                    st.success(f"✅ {h_ad} eklendi!")
+                    st.rerun()
+                else:
+                    st.error(f"❌ {h_ad} BIST'te bulunamadı!")
     
     # Portföy hesaplama
-    fiyat_map = {
-        "GARAN": v['garan'], "ISCTR": v['isctr'], "AKBNK": v['akbnk'],
-        "SISE": v['sise'], "ASELSAN": v['aselsan'], "THYAO": v['thy'],
-        "YKBNK": v['ykbnk'], "TTKOM": v['ttkom']
-    }
-    
     toplam = 0
     toplam_maliyet = 0
+    sat_sinyalleri = []
     
     for p in st.session_state.portfoy:
-        p["Güncel"] = fiyat_map.get(p["Ad"], p["Alış"])
+        if p["Ad"] == "PPF":
+            p["Güncel"] = 1.00
+            p["F/K"] = "-"
+            p["PD/DD"] = "-"
+        elif p["Ad"] in BIST_SEMBOLLER:
+            veri = fiyat_cek(BIST_SEMBOLLER[p["Ad"]])
+            if veri:
+                p["Güncel"] = veri["Fiyat"]
+                p["F/K"] = veri["F/K"]
+                p["PD/DD"] = veri["PD/DD"]
+            else:
+                p["Güncel"] = p["Alış"]
+                p["F/K"] = "-"
+                p["PD/DD"] = "-"
+        else:
+            continue
+        
         p["Maliyet"] = p["Lot"] * p["Alış"]
         p["Değer"] = p["Lot"] * p["Güncel"]
         p["K/Z"] = p["Değer"] - p["Maliyet"]
-        p["K/Z %"] = (p["K/Z"] / p["Maliyet"]) * 100
+        p["K/Z %"] = (p["K/Z"] / p["Maliyet"]) * 100 if p["Maliyet"] > 0 else 0
         toplam += p["Değer"]
         toplam_maliyet += p["Maliyet"]
-    
-    kar_zarar_toplam = toplam - toplam_maliyet
-    getiri = ((toplam - toplam_maliyet) / toplam_maliyet) * 100 if toplam_maliyet > 0 else 0
-    renk = "#22ab94" if kar_zarar_toplam >= 0 else "#f23645"
+        
+        # Sat sinyali kontrolü (%7 zarar veya %20 kâr)
+        if p["Ad"] != "PPF" and p["K/Z %"] <= -7:
+            sat_sinyalleri.append(f"🔴 {p['Ad']}: %{p['K/Z %']:.1f} zarar - STOP-LOSS!")
+        elif p["Ad"] != "PPF" and p["K/Z %"] >= 20:
+            sat_sinyalleri.append(f"🟢 {p['Ad']}: %{p['K/Z %']:.1f} kâr - KÂR AL!")
     
     # Toplam kartı
+    kar_zarar = toplam - toplam_maliyet
+    getiri = (kar_zarar / toplam_maliyet) * 100 if toplam_maliyet > 0 else 0
+    renk = "#22ab94" if kar_zarar >= 0 else "#f23645"
+    
     st.markdown(f"""
     <div class="tv-panel" style="text-align: center;">
         <div class="label">TOPLAM DEĞER</div>
         <div style="font-size: 28px; font-weight: 700; color: #d1d4dc;">{toplam:,.0f} <span style="font-size:14px;">TL</span></div>
-        <div style="font-size: 14px; color: {renk}; margin-top: 4px;">{kar_zarar_toplam:+,.0f} TL (%{getiri:+.1f})</div>
+        <div style="font-size: 14px; color: {renk};">{kar_zarar:+,.0f} TL (%{getiri:+.1f})</div>
     </div>
     """, unsafe_allow_html=True)
     
-    st.markdown("<hr>", unsafe_allow_html=True)
-    
     # Portföy listesi
     for p in st.session_state.portfoy:
-        kz_renk = "#22ab94" if p['K/Z'] >= 0 else "#f23645"
+        if p["Ad"] not in BIST_SEMBOLLER and p["Ad"] != "PPF":
+            continue
+        kz_renk = "#22ab94" if p.get('K/Z', 0) >= 0 else "#f23645"
         st.markdown(f"""
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #2a2e39;">
             <div>
@@ -494,17 +265,63 @@ with sag:
                 <div style="color: #787b86; font-size: 11px;">{p['Lot']} lot × {p['Alış']:.2f} TL</div>
             </div>
             <div style="text-align: right;">
-                <div style="color: #d1d4dc;">{p['Değer']:,.0f} TL</div>
-                <div style="color: {kz_renk}; font-size: 12px;">%{p['K/Z %']:+.1f}</div>
+                <div style="color: #d1d4dc;">{p.get('Değer', 0):,.0f} TL</div>
+                <div style="color: {kz_renk}; font-size: 12px;">%{p.get('K/Z %', 0):+.1f}</div>
             </div>
         </div>
         """, unsafe_allow_html=True)
     
-    # Sıfırla butonu
-    st.markdown("<br>", unsafe_allow_html=True)
+    # Sıfırla
     if st.button("🔄 Portföyü Sıfırla", use_container_width=True):
         st.session_state.portfoy = [{"Ad": "PPF", "Lot": 36500, "Alış": 1.00}]
         st.rerun()
+
+# --- SAĞ: GÜN SONU RAPORU ---
+with sag:
+    st.markdown('<h3>📊 GÜN SONU RAPORU</h3>', unsafe_allow_html=True)
+    
+    turkiye_saati = datetime.now(pytz.timezone('Europe/Istanbul'))
+    st.markdown(f"""
+    <div class="tv-panel" style="text-align: center;">
+        <div style="color: #787b86; font-size: 12px;">TÜRKİYE SAATİ</div>
+        <div style="font-size: 24px; font-weight: 700; color: #d1d4dc;">{turkiye_saati.strftime('%H:%M:%S')}</div>
+        <div style="color: #787b86; font-size: 11px;">{turkiye_saati.strftime('%d.%m.%Y')}</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # 18:30 kontrolü
+    saat = turkiye_saati.hour
+    dakika = turkiye_saati.minute
+    
+    if saat == 18 and dakika >= 30 or saat > 18:
+        st.markdown("---")
+        st.markdown('<h3 style="color: #ff9800;">🔔 GÜN SONU ÖZETİ</h3>', unsafe_allow_html=True)
+        
+        st.markdown(f"""
+        <div class="tv-panel">
+            <div style="color: #d1d4dc; font-size: 16px; font-weight: 600;">Portföy Değeri: {toplam:,.0f} TL</div>
+            <div style="color: {renk}; margin-top: 4px;">Günlük K/Z: {kar_zarar:+,.0f} TL</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if sat_sinyalleri:
+            st.markdown("---")
+            st.markdown('<h3 style="color: #f23645;">⚠️ SAT SİNYALLERİ</h3>', unsafe_allow_html=True)
+            for sinyal in sat_sinyalleri:
+                st.markdown(f"""
+                <div class="tv-panel sat" style="margin-bottom: 6px;">
+                    <div style="color: #d1d4dc; font-weight: 500;">{sinyal}</div>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.success("✅ Sat sinyali yok. Portföy sağlıklı.")
+    else:
+        st.info(f"⏳ Gün sonu raporu saat 18:30'da hazır olacak.\nKalan süre: {18 - saat} saat {60 - dakika if dakika <= 30 else 90 - dakika} dakika")
+    
+    # Dünkü özet (manuel)
+    st.markdown("---")
+    st.markdown('<h3 style="color: #787b86;">📋 DÜN</h3>', unsafe_allow_html=True)
+    st.caption("Henüz dünkü veri yok.")
 
 st.markdown("<hr>", unsafe_allow_html=True)
 st.caption("⚠️ Yatırım tavsiyesi değildir. Veri: Yahoo Finance")

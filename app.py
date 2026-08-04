@@ -405,34 +405,75 @@ with orta:
 with sag:
     st.markdown('<h3>💼 PORTFÖYÜM</h3>', unsafe_allow_html=True)
     
-    portfoy = [
-        {"Ad": "PPF", "Lot": 12000, "Alış": 1.00, "Güncel": 1.00},
-        {"Ad": "Altın Fonu", "Lot": 6000, "Alış": 6170, "Güncel": altin_manual},
-        {"Ad": "AKBNK", "Lot": 121, "Alış": 66.00, "Güncel": v['akbnk']},
-        {"Ad": "ASELSAN", "Lot": 18, "Alış": 336.25, "Güncel": v['aselsan']},
-        {"Ad": "YKBNK", "Lot": 118, "Alış": 34.00, "Güncel": v['ykbnk']},
-        {"Ad": "THYAO", "Lot": 13, "Alış": 317.00, "Güncel": v['thy']},
-    ]
+    # Session state başlat
+    if "portfoy" not in st.session_state:
+        st.session_state.portfoy = [
+            {"Ad": "PPF", "Lot": 5475, "Alış": 1.00},
+            {"Ad": "GARAN", "Lot": 69, "Alış": 131.80},
+            {"Ad": "ISCTR", "Lot": 733, "Alış": 12.44},
+            {"Ad": "AKBNK", "Lot": 107, "Alış": 68.10},
+            {"Ad": "SISE", "Lot": 130, "Alış": 41.96},
+        ]
+    
+    # Manuel hisse ekleme
+    with st.expander("➕ Hisse Ekle / Düzenle"):
+        with st.form("hisse_form"):
+            hisse_adi = st.text_input("Hisse Adı", placeholder="Örn: GARAN")
+            col1, col2 = st.columns(2)
+            with col1:
+                lot = st.number_input("Lot", value=1, step=1)
+            with col2:
+                alis = st.number_input("Alış Fiyatı (TL)", value=1.0, step=0.01)
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                ekle = st.form_submit_button("✅ Ekle/Güncelle", use_container_width=True)
+            with col2:
+                sil = st.form_submit_button("🗑️ Seçili Hisseden Çıkar", use_container_width=True)
+            
+            if ekle and hisse_adi:
+                # Aynı hisse varsa güncelle
+                bulundu = False
+                for p in st.session_state.portfoy:
+                    if p["Ad"] == hisse_adi.upper():
+                        p["Lot"] = lot
+                        p["Alış"] = alis
+                        bulundu = True
+                        break
+                if not bulundu:
+                    st.session_state.portfoy.append({"Ad": hisse_adi.upper(), "Lot": lot, "Alış": alis})
+                st.success(f"✅ {hisse_adi.upper()} güncellendi!")
+                st.rerun()
+            
+            if sil and hisse_adi:
+                st.session_state.portfoy = [p for p in st.session_state.portfoy if p["Ad"] != hisse_adi.upper()]
+                st.warning(f"🗑️ {hisse_adi.upper()} silindi!")
+                st.rerun()
+    
+    # Portföy hesaplama
+    fiyat_map = {
+        "GARAN": v['garan'], "ISCTR": v['isctr'], "AKBNK": v['akbnk'],
+        "SISE": v['sise'], "ASELSAN": v['aselsan'], "THYAO": v['thy'],
+        "YKBNK": v['ykbnk'], "TTKOM": v['ttkom']
+    }
     
     toplam = 0
-    for p in portfoy:
-        if p["Ad"] == "PPF":
-            p["Maliyet"] = p["Lot"]
-            p["Değer"] = p["Lot"]
-        elif p["Ad"] == "Altın Fonu":
-            p["Maliyet"] = p["Lot"]
-            p["Değer"] = p["Lot"] * (p["Güncel"] / p["Alış"])
-        else:
-            p["Maliyet"] = p["Lot"] * p["Alış"]
-            p["Değer"] = p["Lot"] * p["Güncel"]
+    toplam_maliyet = 0
+    
+    for p in st.session_state.portfoy:
+        p["Güncel"] = fiyat_map.get(p["Ad"], p["Alış"])
+        p["Maliyet"] = p["Lot"] * p["Alış"]
+        p["Değer"] = p["Lot"] * p["Güncel"]
         p["K/Z"] = p["Değer"] - p["Maliyet"]
         p["K/Z %"] = (p["K/Z"] / p["Maliyet"]) * 100
         toplam += p["Değer"]
+        toplam_maliyet += p["Maliyet"]
     
-    kar_zarar_toplam = toplam - 40000
-    getiri = ((toplam - 40000) / 40000) * 100
+    kar_zarar_toplam = toplam - toplam_maliyet
+    getiri = ((toplam - toplam_maliyet) / toplam_maliyet) * 100 if toplam_maliyet > 0 else 0
     renk = "#22ab94" if kar_zarar_toplam >= 0 else "#f23645"
     
+    # Toplam kartı
     st.markdown(f"""
     <div class="tv-panel" style="text-align: center;">
         <div class="label">TOPLAM DEĞER</div>
@@ -443,13 +484,14 @@ with sag:
     
     st.markdown("<hr>", unsafe_allow_html=True)
     
-    for p in portfoy:
+    # Portföy listesi
+    for p in st.session_state.portfoy:
         kz_renk = "#22ab94" if p['K/Z'] >= 0 else "#f23645"
         st.markdown(f"""
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #2a2e39;">
             <div>
                 <div style="color: #d1d4dc; font-weight: 500;">{p['Ad']}</div>
-                <div style="color: #787b86; font-size: 11px;">{p['Lot']} lot</div>
+                <div style="color: #787b86; font-size: 11px;">{p['Lot']} lot × {p['Alış']:.2f} TL</div>
             </div>
             <div style="text-align: right;">
                 <div style="color: #d1d4dc;">{p['Değer']:,.0f} TL</div>
@@ -457,6 +499,12 @@ with sag:
             </div>
         </div>
         """, unsafe_allow_html=True)
+    
+    # Sıfırla butonu
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("🔄 Portföyü Sıfırla", use_container_width=True):
+        st.session_state.portfoy = [{"Ad": "PPF", "Lot": 36500, "Alış": 1.00}]
+        st.rerun()
 
 st.markdown("<hr>", unsafe_allow_html=True)
 st.caption("⚠️ Yatırım tavsiyesi değildir. Veri: Yahoo Finance")

@@ -44,9 +44,25 @@ st.markdown("""
 @st.cache_data(ttl=300)
 def fiyat_cek(sembol):
     try:
-        f = round(yf.Ticker(sembol).history(period="1d")['Close'].iloc[-1], 2)
-        info = yf.Ticker(sembol).info
-        return {"Fiyat": f, "F/K": info.get("trailingPE","-"), "PD/DD": info.get("priceToBook","-")}
+        hisse = yf.Ticker(sembol)
+        f = round(hisse.history(period="1d")['Close'].iloc[-1], 2)
+        info = hisse.info
+        
+        try:
+            prev = hisse.history(period="5d")['Close'].iloc[-2]
+            degisim = round(((f - prev) / prev) * 100, 2)
+        except:
+            degisim = 0
+        
+        return {
+            "Fiyat": f,
+            "F/K": info.get("trailingPE", "-"),
+            "PD/DD": info.get("priceToBook", "-"),
+            "Değişim": degisim,
+            "Beta": info.get("beta", "-"),
+            "52H Dip": info.get("fiftyTwoWeekLow", "-"),
+            "52H Zirve": info.get("fiftyTwoWeekHigh", "-"),
+        }
     except:
         return None
 
@@ -131,16 +147,22 @@ for p in st.session_state.portfoy:
         p["Güncel"] = 1.00
         p["F/K"] = "-"
         p["PD/DD"] = "-"
+        p["Değişim"] = 0
+        p["Beta"] = "-"
     else:
         veri = fiyat_cek(f"{p['Ad']}.IS")
         if veri:
             p["Güncel"] = veri["Fiyat"]
             p["F/K"] = veri["F/K"]
             p["PD/DD"] = veri["PD/DD"]
+            p["Değişim"] = veri["Değişim"]
+            p["Beta"] = veri["Beta"]
         else:
             p["Güncel"] = p["Alış"]
             p["F/K"] = "-"
             p["PD/DD"] = "-"
+            p["Değişim"] = 0
+            p["Beta"] = "-"
     
     p["Maliyet"] = p["Lot"] * p["Alış"]
     p["Değer"] = p["Lot"] * p["Güncel"]
@@ -232,7 +254,7 @@ st.subheader("🤖 DeepSeek'e Gönder")
 ds_metin = f"BIST: {bist:,} | USD: {usd:.2f}\n"
 for p in st.session_state.portfoy:
     if p["Ad"] != "NAKİT":
-        ds_metin += f"{p['Ad']}: Lot={p['Lot']:.0f} Alış={p['Alış']:.2f} Güncel={p['Güncel']:.2f} K/Z=%{p.get('K/Z %',0):+.1f} F/K={p.get('F/K','-')} PD/DD={p.get('PD/DD','-')}\n"
+        ds_metin += f"{p['Ad']}: Lot={p['Lot']:.0f} Alış={p['Alış']:.2f} Güncel={p['Güncel']:.2f} K/Z=%{p.get('K/Z %',0):+.1f} F/K={p.get('F/K','-')} PD/DD={p.get('PD/DD','-')} Günlük=%{p.get('Değişim',0):+.1f} Beta={p.get('Beta','-')}\n"
     else:
         ds_metin += f"{p['Ad']}: {p['Lot']:,.0f} TL\n"
 

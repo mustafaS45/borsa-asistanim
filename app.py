@@ -237,7 +237,7 @@ with orta:
     st.markdown('<h3>💼 PORTFÖYÜM</h3>', unsafe_allow_html=True)
     
     if "portfoy" not in st.session_state:
-        st.session_state.portfoy = [{"Ad": "PPF", "Lot": 36500, "Alış": 1.00}]
+        st.session_state.portfoy = [{"Ad": "NAKİT", "Lot": 36500, "Alış": 1.00}]
     
     # Hisse ekle
     with st.expander("➕ Hisse Ekle"):
@@ -249,6 +249,19 @@ with orta:
             
             if st.form_submit_button("✅ Ekle", use_container_width=True):
                 if h_ad in BIST_SEMBOLLER:
+                    maliyet = h_lot * h_alis
+                    
+                    # Nakitten düş
+                    for p in st.session_state.portfoy:
+                        if p["Ad"] == "NAKİT":
+                            if p["Lot"] >= maliyet:
+                                p["Lot"] -= maliyet
+                            else:
+                                st.error(f"❌ Yetersiz nakit! Nakit: {p['Lot']:,.0f} TL, Gereken: {maliyet:,.0f} TL")
+                                st.stop()
+                            break
+                    
+                    # Hisse ekle/güncelle
                     bulundu = False
                     for p in st.session_state.portfoy:
                         if p["Ad"] == h_ad:
@@ -258,7 +271,11 @@ with orta:
                             break
                     if not bulundu:
                         st.session_state.portfoy.append({"Ad": h_ad, "Lot": h_lot, "Alış": h_alis})
-                    st.success(f"✅ {h_ad} eklendi!")
+                    
+                    # Nakit bittiyse sil
+                    st.session_state.portfoy = [p for p in st.session_state.portfoy if p["Ad"] != "NAKİT" or p["Lot"] > 0]
+                    
+                    st.success(f"✅ {h_ad} eklendi! (Nakitten {maliyet:,.0f} TL düşüldü)")
                     st.rerun()
                 else:
                     st.error(f"❌ {h_ad} BIST'te bulunamadı!")
@@ -269,7 +286,7 @@ with orta:
     sat_sinyalleri = []
     
     for p in st.session_state.portfoy:
-        if p["Ad"] == "PPF":
+        if p["Ad"] == "NAKİT":
             p["Güncel"] = 1.00
             p["F/K"] = "-"
             p["PD/DD"] = "-"
@@ -293,9 +310,9 @@ with orta:
         toplam += p["Değer"]
         toplam_maliyet += p["Maliyet"]
         
-        if p["Ad"] != "PPF" and p["K/Z %"] <= -7:
+        if p["Ad"] != "NAKİT" and p["K/Z %"] <= -7:
             sat_sinyalleri.append(f"🔴 {p['Ad']}: %{p['K/Z %']:.1f} zarar - STOP-LOSS!")
-        elif p["Ad"] != "PPF" and p["K/Z %"] >= 20:
+        elif p["Ad"] != "NAKİT" and p["K/Z %"] >= 20:
             sat_sinyalleri.append(f"🟢 {p['Ad']}: %{p['K/Z %']:.1f} kâr - KÂR AL!")
     
     kar_zarar = toplam - toplam_maliyet
@@ -311,7 +328,7 @@ with orta:
     """, unsafe_allow_html=True)
     
     for p in st.session_state.portfoy:
-        if p["Ad"] not in BIST_SEMBOLLER and p["Ad"] != "PPF":
+        if p["Ad"] not in BIST_SEMBOLLER and p["Ad"] != "NAKİT":
             continue
         kz_renk = "#22ab94" if p.get('K/Z', 0) >= 0 else "#f23645"
         st.markdown(f"""
@@ -328,7 +345,7 @@ with orta:
         """, unsafe_allow_html=True)
     
     if st.button("🔄 Portföyü Sıfırla", use_container_width=True):
-        st.session_state.portfoy = [{"Ad": "PPF", "Lot": 36500, "Alış": 1.00}]
+        st.session_state.portfoy = [{"Ad": "NAKİT", "Lot": 36500, "Alış": 1.00}]
         st.rerun()
 
 # --- SAĞ: Gün Sonu Raporu ---

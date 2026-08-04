@@ -11,7 +11,7 @@ st.set_page_config(page_title="Portföy Asistanım", page_icon="📊", layout="w
 st.markdown("""
 <style>
     .stApp { background: #131722; }
-    .main .block-container { padding: 1.5rem 2rem; max-width: 1000px; }
+    .main .block-container { padding: 1.5rem 2rem; max-width: 1100px; }
     
     .tv-panel {
         background: #1e222d; border: 1px solid #2a2e39;
@@ -35,6 +35,8 @@ st.markdown("""
     .sinyal-kar { border-left: 3px solid #22ab94 !important; }
     .sinyal-zarar { border-left: 3px solid #f23645 !important; }
     .sinyal-normal { border-left: 3px solid #2a2e39 !important; }
+    
+    .rapor-baslik { color: #ff9800 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -62,6 +64,7 @@ def fiyat_cek(sembol):
             "Beta": info.get("beta", "-"),
             "52H Dip": info.get("fiftyTwoWeekLow", "-"),
             "52H Zirve": info.get("fiftyTwoWeekHigh", "-"),
+            "Hacim": info.get("volume", "-"),
         }
     except:
         return None
@@ -149,6 +152,11 @@ for p in st.session_state.portfoy:
         p["PD/DD"] = "-"
         p["Değişim"] = 0
         p["Beta"] = "-"
+        p["52H Dip"] = "-"
+        p["52H Zirve"] = "-"
+        p["Hacim"] = "-"
+        p["Hedef"] = "-"
+        p["Konum"] = "-"
     else:
         veri = fiyat_cek(f"{p['Ad']}.IS")
         if veri:
@@ -157,12 +165,32 @@ for p in st.session_state.portfoy:
             p["PD/DD"] = veri["PD/DD"]
             p["Değişim"] = veri["Değişim"]
             p["Beta"] = veri["Beta"]
+            p["52H Dip"] = veri["52H Dip"]
+            p["52H Zirve"] = veri["52H Zirve"]
+            p["Hacim"] = veri["Hacim"]
+            
+            # Hedef fiyat (alışın %20 üstü)
+            p["Hedef"] = round(p["Alış"] * 1.20, 2)
+            
+            # Konum (52H aralıkta nerede?)
+            try:
+                dip = float(veri["52H Dip"])
+                zirve = float(veri["52H Zirve"])
+                konum = round(((p["Güncel"] - dip) / (zirve - dip)) * 100, 1)
+                p["Konum"] = f"%{konum} ({'🔴 Zirvede' if konum >= 90 else '🟢 Dipte' if konum <= 20 else '⚪ Orta'})"
+            except:
+                p["Konum"] = "-"
         else:
             p["Güncel"] = p["Alış"]
             p["F/K"] = "-"
             p["PD/DD"] = "-"
             p["Değişim"] = 0
             p["Beta"] = "-"
+            p["52H Dip"] = "-"
+            p["52H Zirve"] = "-"
+            p["Hacim"] = "-"
+            p["Hedef"] = round(p["Alış"] * 1.20, 2)
+            p["Konum"] = "-"
     
     p["Maliyet"] = p["Lot"] * p["Alış"]
     p["Değer"] = p["Lot"] * p["Güncel"]
@@ -200,11 +228,13 @@ if sinyaller_kar or sinyaller_zarar:
     st.subheader("⚠️ SİNYALLER")
     
     for p in sinyaller_kar:
+        hedef_yuzde = round(((p["Hedef"] - p["Alış"]) / p["Alış"]) * 100, 1) if isinstance(p.get("Hedef"), (int, float)) else 20
         st.markdown(f"""
         <div class="tv-panel sinyal-kar" style="margin-bottom:6px;">
             <span style="color:#22ab94;font-weight:600;">🟢 {p['Ad']}</span> 
             <span style="color:#d1d4dc;">%{p['K/Z %']:.1f} kârda</span>
             <span style="color:#22ab94;font-weight:500;"> → KÂR AL!</span>
+            <span style="color:#787b86;font-size:11px;float:right;">Hedef: {p.get('Hedef','-')} TL | 52H Konum: {p.get('Konum','-')}</span>
         </div>
         """, unsafe_allow_html=True)
     
@@ -214,6 +244,7 @@ if sinyaller_kar or sinyaller_zarar:
             <span style="color:#f23645;font-weight:600;">🔴 {p['Ad']}</span> 
             <span style="color:#d1d4dc;">%{p['K/Z %']:.1f} zararda</span>
             <span style="color:#f23645;font-weight:500;"> → STOP-LOSS!</span>
+            <span style="color:#787b86;font-size:11px;float:right;">Hedef: {p.get('Hedef','-')} TL | 52H Konum: {p.get('Konum','-')}</span>
         </div>
         """, unsafe_allow_html=True)
 else:
@@ -230,20 +261,86 @@ for p in st.session_state.portfoy:
     emoji = "🔴" if p in sinyaller_zarar else "🟢" if p in sinyaller_kar else "⚪"
     sinif = "sinyal-zarar" if p in sinyaller_zarar else "sinyal-kar" if p in sinyaller_kar else "sinyal-normal"
     
+    # Hacim formatla
+    hacim = p.get('Hacim', '-')
+    if isinstance(hacim, (int, float)) and hacim != '-':
+        if hacim > 1_000_000_000:
+            hacim = f"{hacim/1_000_000_000:.1f}B"
+        elif hacim > 1_000_000:
+            hacim = f"{hacim/1_000_000:.1f}M"
+        elif hacim > 1_000:
+            hacim = f"{hacim/1_000:.0f}B"
+    
     st.markdown(f"""
     <div class="tv-panel {sinif}" style="margin-bottom:6px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-            <span style="color:#d1d4dc;font-weight:600;width:60px;">{emoji} {p['Ad']}</span>
-            <span style="color:#787b86;font-size:12px;width:60px;">{p['Lot']:.0f} lot</span>
-            <span style="color:#787b86;font-size:12px;width:75px;">Alış:{p['Alış']:.2f}</span>
-            <span style="color:#d1d4dc;width:70px;">{p['Güncel']:.2f} TL</span>
-            <span style="color:#d1d4dc;font-weight:500;width:90px;text-align:right;">{p['Değer']:,.0f} TL</span>
-            <span style="color:{kz_renk};font-weight:600;width:80px;text-align:right;">%{p.get('K/Z %',0):+.1f}</span>
-            <span style="color:#787b86;font-size:11px;">F/K:{p.get('F/K','-')}</span>
-            <span style="color:#787b86;font-size:11px;">PD/DD:{p.get('PD/DD','-')}</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+            <span style="color:#d1d4dc;font-weight:600;width:55px;">{emoji} {p['Ad']}</span>
+            <span style="color:#787b86;font-size:11px;width:50px;">{p['Lot']:.0f} lot</span>
+            <span style="color:#787b86;font-size:11px;width:65px;">Alış:{p['Alış']:.2f}</span>
+            <span style="color:#d1d4dc;width:60px;">{p['Güncel']:.2f} TL</span>
+            <span style="color:{kz_renk};font-weight:600;width:70px;text-align:right;">%{p.get('K/Z %',0):+.1f}</span>
+            <span style="color:#787b86;font-size:10px;width:55px;">Hedef:{p.get('Hedef','-')}</span>
+            <span style="color:#787b86;font-size:10px;width:55px;">F/K:{p.get('F/K','-')}</span>
+            <span style="color:#787b86;font-size:10px;">PD/DD:{p.get('PD/DD','-')}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <span style="color:#787b86;font-size:10px;">📊 52H: {p.get('52H Dip','-')} - {p.get('52H Zirve','-')} | Konum: {p.get('Konum','-')}</span>
+            <span style="color:#787b86;font-size:10px;">📈 Günlük: %{p.get('Değişim',0):+.1f} | Hacim: {hacim} | Beta: {p.get('Beta','-')}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+# ============================================
+# GÜN SONU RAPORU
+# ============================================
+st.markdown("---")
+st.subheader("📊 Gün Sonu Raporu")
+
+tz = pytz.timezone('Europe/Istanbul')
+ts = datetime.now(tz)
+
+if ts.hour >= 18:
+    # Bugünkü değişimleri hesapla
+    st.markdown('<h3 class="rapor-baslik">🔔 GÜN SONU ÖZETİ</h3>', unsafe_allow_html=True)
+    
+    st.markdown(f"""
+    <div class="tv-panel">
+        <div style="display:flex;justify-content:space-between;">
+            <span style="color:#d1d4dc;">Toplam Portföy:</span>
+            <span style="color:#d1d4dc;font-weight:700;">{toplam:,.0f} TL</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <span style="color:#d1d4dc;">Günlük Değişim:</span>
+            <span style="color:{renk};font-weight:600;">{kar_zarar:+,.0f} TL</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # En çok kazandıran / kaybettiren
+    kazanan = max([p for p in st.session_state.portfoy if p['Ad'] != 'NAKİT'], key=lambda x: x.get('Değişim', 0)) if st.session_state.portfoy else None
+    kaybeden = min([p for p in st.session_state.portfoy if p['Ad'] != 'NAKİT'], key=lambda x: x.get('Değişim', 0)) if st.session_state.portfoy else None
+    
+    if kazanan and kaybeden:
+        st.markdown(f"""
+        <div class="tv-panel">
+            <div style="display:flex;justify-content:space-between;">
+                <span style="color:#22ab94;">🟢 En çok yükselen: {kazanan['Ad']} (%{kazanan.get('Değişim',0):+.1f})</span>
+                <span style="color:#f23645;">🔴 En çok düşen: {kaybeden['Ad']} (%{kaybeden.get('Değişim',0):+.1f})</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Yarın için hedefte olanlar
+    hedef_yakin = [p for p in st.session_state.portfoy if p['Ad'] != 'NAKİT' and isinstance(p.get('Hedef'), (int, float)) and p['Güncel'] >= p['Hedef'] * 0.95]
+    if hedef_yakin:
+        st.markdown("---")
+        st.markdown("**🎯 Hedefe Yakın Hisseler:**")
+        for p in hedef_yakin:
+            st.markdown(f"• {p['Ad']}: {p['Güncel']:.2f} TL → Hedef: {p['Hedef']:.2f} TL")
+else:
+    kalan_dk = 30 - ts.minute if ts.minute <= 30 else 90 - ts.minute
+    kalan_saat = 17 - ts.hour if ts.minute <= 30 else 18 - ts.hour
+    st.info(f"⏳ Gün sonu raporu saat 18:00'de hazır olacak. Kalan: {kalan_saat}s {kalan_dk}dk")
 
 # ============================================
 # DEEPSEEK VERİSİ
@@ -254,7 +351,7 @@ st.subheader("🤖 DeepSeek'e Gönder")
 ds_metin = f"BIST: {bist:,} | USD: {usd:.2f}\n"
 for p in st.session_state.portfoy:
     if p["Ad"] != "NAKİT":
-        ds_metin += f"{p['Ad']}: Lot={p['Lot']:.0f} Alış={p['Alış']:.2f} Güncel={p['Güncel']:.2f} K/Z=%{p.get('K/Z %',0):+.1f} F/K={p.get('F/K','-')} PD/DD={p.get('PD/DD','-')} Günlük=%{p.get('Değişim',0):+.1f} Beta={p.get('Beta','-')}\n"
+        ds_metin += f"{p['Ad']}: Lot={p['Lot']:.0f} Alış={p['Alış']:.2f} Güncel={p['Güncel']:.2f} K/Z=%{p.get('K/Z %',0):+.1f} F/K={p.get('F/K','-')} PD/DD={p.get('PD/DD','-')} Günlük=%{p.get('Değişim',0):+.1f} Beta={p.get('Beta','-')} 52H={p.get('52H Dip','-')}-{p.get('52H Zirve','-')} Konum={p.get('Konum','-')} Hedef={p.get('Hedef','-')}\n"
     else:
         ds_metin += f"{p['Ad']}: {p['Lot']:,.0f} TL\n"
 

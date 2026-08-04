@@ -199,72 +199,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ============================================
-# LIDER PANEL
-# ============================================
-try:
-    lider = yf.Ticker("LIDER.IS")
-    lider_fiyat = round(lider.history(period="1d")['Close'].iloc[-1], 2)
-except:
-    lider_fiyat = 87.70
 
-maliyet = 98.90
-lot = 342
-guncel_deger = lider_fiyat * lot
-toplam_yatirim = maliyet * lot
-zarar = guncel_deger - toplam_yatirim
-zarar_yuzde = (zarar / toplam_yatirim) * 100
-panik = maliyet * 0.90
-hedef = maliyet * 1.10
-
-panel_class = "panik" if lider_fiyat <= panik else "zarar" if lider_fiyat < maliyet else "kar"
-panel_renk = "#f23645" if lider_fiyat <= panik else "#ff9800" if lider_fiyat < maliyet else "#22ab94"
-panel_emoji = "🔴" if lider_fiyat <= panik else "🟠" if lider_fiyat < maliyet else "🟢"
-
-st.markdown(f"""
-<div class="tv-panel {panel_class}">
-    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 14px; font-weight: 600; color: #d1d4dc;">{panel_emoji} LIDER</span>
-            <span style="font-size: 22px; font-weight: 700; color: {panel_renk};">{lider_fiyat:.2f}</span>
-            <span style="color: #787b86; font-size: 12px;">TRY</span>
-        </div>
-        <div style="display: flex; gap: 25px;">
-            <div>
-                <div style="color: #787b86; font-size: 10px;">MALİYET</div>
-                <div style="color: #d1d4dc; font-weight: 500;">{maliyet:.2f}</div>
-            </div>
-            <div>
-                <div style="color: #787b86; font-size: 10px;">ZARAR</div>
-                <div style="color: #f23645; font-weight: 600;">{zarar:,.0f} TL (%{zarar_yuzde:.1f})</div>
-            </div>
-            <div>
-                <div style="color: #787b86; font-size: 10px;">PANİK</div>
-                <div style="color: #ff9800; font-weight: 500;">{panik:.2f}</div>
-            </div>
-            <div>
-                <div style="color: #787b86; font-size: 10px;">HEDEF</div>
-                <div style="color: #22ab94; font-weight: 500;">{hedef:.2f}</div>
-            </div>
-        </div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-# Kopyala butonu
-lider_veri = f"LIDER: {lider_fiyat:.2f} TL | Maliyet: {maliyet} | Zarar: {zarar:,.0f} TL (%{zarar_yuzde:.1f})"
-st.components.v1.html(f"""
-    <div style="margin-bottom: 15px;">
-        <textarea id="liderMini" style="display:none;">{lider_veri}</textarea>
-        <button onclick="
-            var t = document.getElementById('liderMini');
-            t.style.display='block'; t.select();
-            navigator.clipboard.writeText(t.value);
-            t.style.display='none';
-        " style="padding:6px 14px; background:#1e222d; color:#787b86; border:1px solid #2a2e39; border-radius:4px; cursor:pointer; font-size:11px;">
-        📋 KOPYALA</button>
-    </div>
-""", height=30)
 
 # ============================================
 # VERİ ÇEKME

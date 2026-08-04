@@ -66,7 +66,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================
-# BIST TÜM HİSSE VERİTABANI (600+ hisse)
+# BIST TÜM HİSSE VERİTABANI
 # ============================================
 BIST_SEMBOLLER = {
     "AEFES": "AEFES.IS", "AGHOL": "AGHOL.IS", "AKBNK": "AKBNK.IS",
@@ -101,7 +101,7 @@ BIST_SEMBOLLER = {
 }
 
 # ============================================
-# VERİ ÇEKME
+# VERİ ÇEKME FONKSİYONLARI
 # ============================================
 @st.cache_data(ttl=300)
 def fiyat_cek(sembol):
@@ -148,8 +148,28 @@ st.markdown("<hr>", unsafe_allow_html=True)
 # ============================================
 sol, orta, sag = st.columns([1, 1.2, 1])
 
-# --- SOL: HİSSE ARAMA ---
+# --- SOL: DeepSeek + Hisse Arama ---
 with sol:
+    st.markdown('<h3>🤖 DEEPSEEK</h3>', unsafe_allow_html=True)
+    
+    deepseek_metni = f"""BIST: {pv['bist']:,} | USD: {pv['usd']:.2f} | Altın: 6170 | Faiz: %37"""
+    
+    st.code(deepseek_metni, language="")
+    
+    st.components.v1.html(f"""
+        <textarea id="deepseekText3" style="display:none;">{deepseek_metni}</textarea>
+        <button onclick="
+            var t = document.getElementById('deepseekText3');
+            t.style.display='block'; t.select();
+            navigator.clipboard.writeText(t.value);
+            t.style.display='none';
+        " style="width:100%; padding:8px; background:#2962ff; color:white; border:none; border-radius:4px; font-size:12px; font-weight:500; cursor:pointer;">
+        📋 PANOYA KOPYALA</button>
+    """, height=40)
+    
+    st.caption("👆 DeepSeek sohbetine yapıştır")
+    
+    st.markdown("<hr>", unsafe_allow_html=True)
     st.markdown('<h3>🔍 HİSSE BİLGİ</h3>', unsafe_allow_html=True)
     
     hisse_kodu = st.text_input("Hisse Kodu", placeholder="Örn: GARAN").upper()
@@ -173,8 +193,47 @@ with sol:
         else:
             st.error(f"❌ {hisse_kodu} BIST'te bulunamadı!")
 
-# --- ORTA: PORTFÖY ---
+# --- ORTA: BIST 100 + Portföy ---
 with orta:
+    st.markdown('<h3>🔍 BIST 100 TARAMA</h3>', unsafe_allow_html=True)
+    
+    if st.button("📡 BIST 100 VERİLERİNİ ÇEK", use_container_width=True):
+        with st.spinner("Taranıyor..."):
+            sonuclar = []
+            progress = st.progress(0)
+            toplam = len(BIST_SEMBOLLER)
+            
+            for i, (isim, sembol) in enumerate(BIST_SEMBOLLER.items()):
+                veri = fiyat_cek(sembol)
+                if veri:
+                    sonuclar.append({
+                        "Hisse": isim, "Fiyat": veri['Fiyat'],
+                        "F/K": veri['F/K'], "PD/DD": veri['PD/DD']
+                    })
+                progress.progress((i + 1) / toplam)
+            
+            progress.empty()
+            st.success(f"✅ {len(sonuclar)} hisse tarandı")
+            st.dataframe(pd.DataFrame(sonuclar), use_container_width=True, hide_index=True)
+            
+            # DeepSeek için BIST 100
+            st.markdown("---")
+            bist_deepseek = "BIST 100 TARAMA:\n"
+            for _, row in pd.DataFrame(sonuclar).iterrows():
+                bist_deepseek += f"{row['Hisse']}: {row['Fiyat']:.2f} TL | F/K: {row['F/K']} | PD/DD: {row['PD/DD']}\n"
+            
+            st.components.v1.html(f"""
+                <textarea id="bist100Text" style="display:none;">{bist_deepseek}</textarea>
+                <button onclick="
+                    var t = document.getElementById('bist100Text');
+                    t.style.display='block'; t.select();
+                    navigator.clipboard.writeText(t.value);
+                    t.style.display='none';
+                " style="width:100%; padding:8px; background:#1e222d; color:#787b86; border:1px solid #2a2e39; border-radius:4px; font-size:11px; cursor:pointer;">
+                📋 BIST 100 VERİSİNİ KOPYALA</button>
+            """, height=40)
+    
+    st.markdown("<hr>", unsafe_allow_html=True)
     st.markdown('<h3>💼 PORTFÖYÜM</h3>', unsafe_allow_html=True)
     
     if "portfoy" not in st.session_state:
@@ -234,13 +293,11 @@ with orta:
         toplam += p["Değer"]
         toplam_maliyet += p["Maliyet"]
         
-        # Sat sinyali kontrolü (%7 zarar veya %20 kâr)
         if p["Ad"] != "PPF" and p["K/Z %"] <= -7:
             sat_sinyalleri.append(f"🔴 {p['Ad']}: %{p['K/Z %']:.1f} zarar - STOP-LOSS!")
         elif p["Ad"] != "PPF" and p["K/Z %"] >= 20:
             sat_sinyalleri.append(f"🟢 {p['Ad']}: %{p['K/Z %']:.1f} kâr - KÂR AL!")
     
-    # Toplam kartı
     kar_zarar = toplam - toplam_maliyet
     getiri = (kar_zarar / toplam_maliyet) * 100 if toplam_maliyet > 0 else 0
     renk = "#22ab94" if kar_zarar >= 0 else "#f23645"
@@ -253,7 +310,6 @@ with orta:
     </div>
     """, unsafe_allow_html=True)
     
-    # Portföy listesi
     for p in st.session_state.portfoy:
         if p["Ad"] not in BIST_SEMBOLLER and p["Ad"] != "PPF":
             continue
@@ -271,12 +327,11 @@ with orta:
         </div>
         """, unsafe_allow_html=True)
     
-    # Sıfırla
     if st.button("🔄 Portföyü Sıfırla", use_container_width=True):
         st.session_state.portfoy = [{"Ad": "PPF", "Lot": 36500, "Alış": 1.00}]
         st.rerun()
 
-# --- SAĞ: GÜN SONU RAPORU ---
+# --- SAĞ: Gün Sonu Raporu ---
 with sag:
     st.markdown('<h3>📊 GÜN SONU RAPORU</h3>', unsafe_allow_html=True)
     
@@ -289,7 +344,6 @@ with sag:
     </div>
     """, unsafe_allow_html=True)
     
-    # 18:30 kontrolü
     saat = turkiye_saati.hour
     dakika = turkiye_saati.minute
     
@@ -316,12 +370,9 @@ with sag:
         else:
             st.success("✅ Sat sinyali yok. Portföy sağlıklı.")
     else:
-        st.info(f"⏳ Gün sonu raporu saat 18:30'da hazır olacak.\nKalan süre: {18 - saat} saat {60 - dakika if dakika <= 30 else 90 - dakika} dakika")
-    
-    # Dünkü özet (manuel)
-    st.markdown("---")
-    st.markdown('<h3 style="color: #787b86;">📋 DÜN</h3>', unsafe_allow_html=True)
-    st.caption("Henüz dünkü veri yok.")
+        kalan_dk = 30 - dakika if dakika <= 30 else 90 - dakika
+        kalan_saat = 17 - saat if dakika <= 30 else 18 - saat
+        st.info(f"⏳ Gün sonu raporu saat 18:30'da.\nKalan: {kalan_saat}s {kalan_dk}dk")
 
 st.markdown("<hr>", unsafe_allow_html=True)
 st.caption("⚠️ Yatırım tavsiyesi değildir. Veri: Yahoo Finance")

@@ -445,7 +445,77 @@ with orta:
     getiri = (kar_zarar / toplam_maliyet) * 100 if toplam_maliyet > 0 else 0
     renk = "#22ab94" if kar_zarar >= 0 else "#f23645"
     
-    st.markdown(f"""
+       st.markdown(f"""
     <div class="tv-panel" style="text-align: center;">
         <div class="label">TOPLAM DEĞER</div>
-        <div style="font-size: 28px; font-weight: 700; color: #d1d4dc;">
+        <div style="font-size: 28px; font-weight: 700; color: #d1d4dc;">{toplam:,.0f} <span style="font-size:14px;">TL</span></div>
+        <div style="font-size: 14px; color: {renk};">{kar_zarar:+,.0f} TL (%{getiri:+.1f})</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    for p in st.session_state.portfoy:
+        if p["Ad"] not in BIST_SEMBOLLER and p["Ad"] != "NAKİT":
+            continue
+        kz_renk = "#22ab94" if p.get('K/Z', 0) >= 0 else "#f23645"
+        st.markdown(f"""
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #2a2e39;">
+            <div>
+                <div style="color: #d1d4dc; font-weight: 500;">{p['Ad']}</div>
+                <div style="color: #787b86; font-size: 11px;">{p['Lot']} lot × {p['Alış']:.2f} TL</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="color: #d1d4dc;">{p.get('Değer', 0):,.0f} TL</div>
+                <div style="color: {kz_renk}; font-size: 12px;">%{p.get('K/Z %', 0):+.1f}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    if st.button("🔄 Portföyü Sıfırla", use_container_width=True):
+        st.session_state.portfoy = [{"Ad": "NAKİT", "Lot": 36500, "Alış": 1.00}]
+        st.rerun()
+
+# --- SAĞ: Gün Sonu Raporu ---
+with sag:
+    st.markdown('<h3>📊 GÜN SONU RAPORU</h3>', unsafe_allow_html=True)
+    
+    turkiye_saati = datetime.now(pytz.timezone('Europe/Istanbul'))
+    st.markdown(f"""
+    <div class="tv-panel" style="text-align: center;">
+        <div style="color: #787b86; font-size: 12px;">TÜRKİYE SAATİ</div>
+        <div style="font-size: 24px; font-weight: 700; color: #d1d4dc;">{turkiye_saati.strftime('%H:%M:%S')}</div>
+        <div style="color: #787b86; font-size: 11px;">{turkiye_saati.strftime('%d.%m.%Y')}</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    saat = turkiye_saati.hour
+    dakika = turkiye_saati.minute
+    
+    if saat == 18 and dakika >= 30 or saat > 18:
+        st.markdown("---")
+        st.markdown('<h3 style="color: #ff9800;">🔔 GÜN SONU ÖZETİ</h3>', unsafe_allow_html=True)
+        
+        st.markdown(f"""
+        <div class="tv-panel">
+            <div style="color: #d1d4dc; font-size: 16px; font-weight: 600;">Portföy Değeri: {toplam:,.0f} TL</div>
+            <div style="color: {renk}; margin-top: 4px;">Günlük K/Z: {kar_zarar:+,.0f} TL</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if sat_sinyalleri:
+            st.markdown("---")
+            st.markdown('<h3 style="color: #f23645;">⚠️ SAT SİNYALLERİ</h3>', unsafe_allow_html=True)
+            for sinyal in sat_sinyalleri:
+                st.markdown(f"""
+                <div class="tv-panel sat" style="margin-bottom: 6px;">
+                    <div style="color: #d1d4dc; font-weight: 500;">{sinyal}</div>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.success("✅ Sat sinyali yok. Portföy sağlıklı.")
+    else:
+        kalan_dk = 30 - dakika if dakika <= 30 else 90 - dakika
+        kalan_saat = 17 - saat if dakika <= 30 else 18 - saat
+        st.info(f"⏳ Gün sonu raporu saat 18:30'da.\nKalan: {kalan_saat}s {kalan_dk}dk")
+
+st.markdown("<hr>", unsafe_allow_html=True)
+st.caption("⚠️ Yatırım tavsiyesi değildir. Veri: Yahoo Finance")

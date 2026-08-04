@@ -17,12 +17,11 @@ st.markdown("""
         background: #1e222d; border: 1px solid #2a2e39;
         border-radius: 6px; padding: 16px; margin-bottom: 12px;
     }
-    .tv-panel.sat { border-left: 3px solid #f23645; }
     
     .stButton > button {
         background: #2962ff !important; color: white !important;
         border: none !important; border-radius: 4px !important;
-        padding: 8px 16px !important; font-weight: 500 !important; width: 100%;
+        padding: 8px 16px !important; font-weight: 500 !important;
     }
     
     h1, h2, h3 { color: #d1d4dc !important; }
@@ -32,6 +31,10 @@ st.markdown("""
         background: #1e222d !important; color: #d1d4dc !important;
         border: 1px solid #2a2e39 !important; border-radius: 4px !important;
     }
+    
+    .sinyal-kar { border-left: 3px solid #22ab94 !important; }
+    .sinyal-zarar { border-left: 3px solid #f23645 !important; }
+    .sinyal-normal { border-left: 3px solid #2a2e39 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -42,8 +45,7 @@ st.markdown("""
 def fiyat_cek(sembol):
     try:
         f = round(yf.Ticker(sembol).history(period="1d")['Close'].iloc[-1], 2)
-        info = yf.Ticker(sembol).info
-        return {"Fiyat": f, "F/K": info.get("trailingPE","-"), "PD/DD": info.get("priceToBook","-")}
+        return f
     except:
         return None
 
@@ -70,7 +72,6 @@ st.caption(f"BIST: {bist:,} | USD: {usd:.2f} | {datetime.now(pytz.timezone('Euro
 # PORTFÖY GİRİŞİ
 # ============================================
 st.markdown("---")
-st.subheader("💼 Portföyüm")
 
 if "portfoy" not in st.session_state:
     st.session_state.portfoy = [
@@ -82,25 +83,47 @@ if "portfoy" not in st.session_state:
         {"Ad": "NAKİT", "Lot": 2142, "Alış": 1.00},
     ]
 
-with st.expander("✏️ Portföyü Düzenle"):
-    yeni = st.text_area("Hisse, Lot, Alış (alt alta)", 
-        value="KARCL,47,35.00\nGARAN,72,127.90\nSISE,130,41.86\nAKBNK,110,66.45\nISCTR,734,12.46\nNAKİT,2142,1.00",
-        height=150)
+# Düzenleme - kolay form
+with st.expander("✏️ Hisse Ekle / Düzenle", expanded=False):
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        hisse_kod = st.text_input("Hisse", placeholder="GARAN").upper()
+    with col2:
+        hisse_lot = st.number_input("Lot", value=1, step=1)
+    with col3:
+        hisse_alis = st.number_input("Alış Fiyatı", value=1.0, step=0.01)
+    with col4:
+        st.write("")
+        st.write("")
+        ekle_btn = st.button("✅ Ekle / Güncelle", use_container_width=True)
+        sil_btn = st.button("🗑️ Sil", use_container_width=True)
     
-    if st.button("💾 Kaydet", use_container_width=True):
-        portfoy = []
-        for satir in yeni.strip().split("\n"):
-            parca = satir.strip().split(",")
-            if len(parca) == 3:
-                portfoy.append({"Ad": parca[0].strip().upper(), "Lot": float(parca[1]), "Alış": float(parca[2])})
-        st.session_state.portfoy = portfoy
-        st.success("✅ Kaydedildi!")
+    if ekle_btn and hisse_kod:
+        bulundu = False
+        for p in st.session_state.portfoy:
+            if p["Ad"] == hisse_kod:
+                p["Lot"] = hisse_lot
+                p["Alış"] = hisse_alis
+                bulundu = True
+                break
+        if not bulundu:
+            st.session_state.portfoy.append({"Ad": hisse_kod, "Lot": hisse_lot, "Alış": hisse_alis})
+        st.success(f"✅ {hisse_kod} güncellendi!")
         st.rerun()
+    
+    if sil_btn and hisse_kod:
+        st.session_state.portfoy = [p for p in st.session_state.portfoy if p["Ad"] != hisse_kod]
+        st.warning(f"🗑️ {hisse_kod} silindi!")
+        st.rerun()
+    
+    # Mevcut portföy özeti
+    st.caption("Mevcut: " + ", ".join([f"{p['Ad']}({p['Lot']:.0f})" for p in st.session_state.portfoy]))
 
 # ============================================
 # HESAPLAMA
 # ============================================
-sinyaller = []
+sinyaller_kar = []
+sinyaller_zarar = []
 toplam = 0
 toplam_maliyet = 0
 
@@ -108,8 +131,8 @@ for p in st.session_state.portfoy:
     if p["Ad"] == "NAKİT":
         p["Güncel"] = 1.00
     else:
-        veri = fiyat_cek(f"{p['Ad']}.IS")
-        p["Güncel"] = veri["Fiyat"] if veri else p["Alış"]
+        f = fiyat_cek(f"{p['Ad']}.IS")
+        p["Güncel"] = f if f else p["Alış"]
     
     p["Maliyet"] = p["Lot"] * p["Alış"]
     p["Değer"] = p["Lot"] * p["Güncel"]
@@ -118,10 +141,11 @@ for p in st.session_state.portfoy:
     toplam += p["Değer"]
     toplam_maliyet += p["Maliyet"]
     
-    if p["Ad"] != "NAKİT" and p["K/Z %"] >= 20:
-        sinyaller.append(f"🟢 {p['Ad']}: %{p['K/Z %']:.0f} kâr → KÂR AL!")
-    elif p["Ad"] != "NAKİT" and p["K/Z %"] <= -7:
-        sinyaller.append(f"🔴 {p['Ad']}: %{p['K/Z %']:.0f} zarar → STOP!")
+    if p["Ad"] != "NAKİT":
+        if p["K/Z %"] >= 20:
+            sinyaller_kar.append(p)
+        elif p["K/Z %"] <= -7:
+            sinyaller_zarar.append(p)
 
 kar_zarar = toplam - toplam_maliyet
 getiri = (kar_zarar / toplam_maliyet) * 100 if toplam_maliyet > 0 else 0
@@ -139,37 +163,59 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ============================================
+# SİNYALLER (En üstte, ayrı ayrı)
+# ============================================
+if sinyaller_kar or sinyaller_zarar:
+    st.markdown("---")
+    st.subheader("⚠️ SİNYALLER")
+    
+    if sinyaller_kar:
+        for p in sinyaller_kar:
+            st.markdown(f"""
+            <div class="tv-panel sinyal-kar" style="margin-bottom:6px;">
+                <span style="color:#22ab94;font-weight:600;">🟢 {p['Ad']}</span> 
+                <span style="color:#d1d4dc;">%{p['K/Z %']:.1f} kârda</span>
+                <span style="color:#22ab94;font-weight:500;"> → KÂR AL!</span>
+                <span style="color:#787b86;font-size:11px;float:right;">{p['Lot']:.0f} lot | Alış:{p['Alış']:.2f} | Güncel:{p['Güncel']:.2f}</span>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    if sinyaller_zarar:
+        for p in sinyaller_zarar:
+            st.markdown(f"""
+            <div class="tv-panel sinyal-zarar" style="margin-bottom:6px;">
+                <span style="color:#f23645;font-weight:600;">🔴 {p['Ad']}</span> 
+                <span style="color:#d1d4dc;">%{p['K/Z %']:.1f} zararda</span>
+                <span style="color:#f23645;font-weight:500;"> → STOP-LOSS!</span>
+                <span style="color:#787b86;font-size:11px;float:right;">{p['Lot']:.0f} lot | Alış:{p['Alış']:.2f} | Güncel:{p['Güncel']:.2f}</span>
+            </div>
+            """, unsafe_allow_html=True)
+else:
+    st.info("✅ Tüm hisseler güvenli aralıkta.")
+
+# ============================================
 # PORTFÖY TABLOSU
 # ============================================
-st.subheader("📋 Detay")
+st.markdown("---")
+st.subheader("📋 Portföy Detay")
 
 for p in st.session_state.portfoy:
     kz_renk = "#22ab94" if p.get('K/Z', 0) >= 0 else "#f23645"
-    emoji = "🔴" if p.get('K/Z %', 0) <= -7 else "🟢" if p.get('K/Z %', 0) >= 20 else "⚪"
+    emoji = "🔴" if p in sinyaller_zarar else "🟢" if p in sinyaller_kar else "⚪"
+    sinif = "sinyal-zarar" if p in sinyaller_zarar else "sinyal-kar" if p in sinyaller_kar else "sinyal-normal"
     
     st.markdown(f"""
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #2a2e39;">
-        <div style="width:80px;"><span style="color:#d1d4dc;font-weight:600;">{emoji} {p['Ad']}</span></div>
-        <div style="color:#787b86;font-size:12px;width:80px;">{p['Lot']:.0f} lot</div>
-        <div style="color:#787b86;font-size:12px;width:80px;">Alış:{p['Alış']:.2f}</div>
-        <div style="color:#d1d4dc;width:80px;">{p['Güncel']:.2f} TL</div>
-        <div style="color:#d1d4dc;font-weight:500;width:100px;text-align:right;">{p['Değer']:,.0f} TL</div>
-        <div style="color:{kz_renk};font-weight:500;width:100px;text-align:right;">%{p.get('K/Z %',0):+.1f}</div>
+    <div class="tv-panel {sinif}" style="margin-bottom:6px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="width:80px;"><span style="color:#d1d4dc;font-weight:600;">{emoji} {p['Ad']}</span></div>
+            <div style="color:#787b86;font-size:12px;width:70px;">{p['Lot']:.0f} lot</div>
+            <div style="color:#787b86;font-size:12px;width:90px;">Alış:{p['Alış']:.2f}</div>
+            <div style="color:#d1d4dc;width:80px;">{p['Güncel']:.2f} TL</div>
+            <div style="color:#d1d4dc;font-weight:500;width:100px;text-align:right;">{p['Değer']:,.0f} TL</div>
+            <div style="color:{kz_renk};font-weight:600;width:100px;text-align:right;">%{p.get('K/Z %',0):+.1f}</div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
-
-# ============================================
-# SAT SİNYALLERİ
-# ============================================
-st.markdown("---")
-st.subheader("⚠️ Sinyaller")
-
-if sinyaller:
-    for s in sinyaller:
-        renk_s = "#f23645" if "🔴" in s else "#22ab94"
-        st.markdown(f'<div class="tv-panel sat" style="border-left:3px solid {renk_s};"><span style="color:#d1d4dc;">{s}</span></div>', unsafe_allow_html=True)
-else:
-    st.success("✅ Tüm hisseler güvenli aralıkta.")
 
 # ============================================
 # DEEPSEEK VERİSİ
@@ -183,7 +229,6 @@ for p in st.session_state.portfoy:
 
 st.code(ds_metin, language="")
 
-# Panoya kopyala butonu
 st.components.v1.html(f"""
     <textarea id="dsText" style="display:none;">{ds_metin}</textarea>
     <button onclick="

@@ -43,6 +43,14 @@ st.markdown("""
     }
     .ust-metric .label { color: #787b86; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
     .ust-metric .value { color: #d1d4dc; font-size: 18px; font-weight: 700; }
+    
+    .sil-btn {
+        background: none !important; color: #f23645 !important;
+        border: 1px solid #f23645 !important; border-radius: 4px !important;
+        padding: 2px 8px !important; font-size: 10px !important;
+        cursor: pointer !important; margin-left: 4px !important;
+    }
+    .sil-btn:hover { background: rgba(242,54,69,0.1) !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -117,7 +125,6 @@ def petrol_cek():
 
 @st.cache_data(ttl=600)
 def vix_cek():
-    """VIX - Korku Endeksi"""
     try:
         vix = yf.Ticker("^VIX")
         fiyat = round(vix.history(period="1d")['Close'].iloc[-1], 2)
@@ -136,7 +143,6 @@ altin = altin_cek()
 petrol = petrol_cek()
 vix = vix_cek()
 
-# VIX seviye yorumu
 if vix["Fiyat"] < 15:
     vix_seviye = "🟢 Sakin"
     vix_renk = "#22ab94"
@@ -151,7 +157,7 @@ else:
     vix_renk = "#f23645"
 
 # ============================================
-# ÜST BAR - 7'Lİ PİYASA ÖZETİ
+# ÜST BAR
 # ============================================
 col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
 
@@ -185,7 +191,6 @@ st.markdown("---")
 
 if "portfoy" not in st.session_state:
     st.session_state.portfoy = [
-        {"Ad": "KARCL", "Lot": 47, "Alış": 35.00},
         {"Ad": "GARAN", "Lot": 72, "Alış": 127.90},
         {"Ad": "SISE", "Lot": 130, "Alış": 41.86},
         {"Ad": "AKBNK", "Lot": 110, "Alış": 66.45},
@@ -205,7 +210,6 @@ with st.expander("✏️ Hisse Ekle / Düzenle", expanded=False):
         st.write("")
         st.write("")
         ekle_btn = st.button("✅ Ekle", use_container_width=True)
-        sil_btn = st.button("🗑️ Sil", use_container_width=True)
     
     if ekle_btn and hisse_kod:
         bulundu = False
@@ -218,11 +222,6 @@ with st.expander("✏️ Hisse Ekle / Düzenle", expanded=False):
         if not bulundu:
             st.session_state.portfoy.append({"Ad": hisse_kod, "Lot": hisse_lot, "Alış": hisse_alis})
         st.success(f"✅ {hisse_kod} güncellendi!")
-        st.rerun()
-    
-    if sil_btn and hisse_kod:
-        st.session_state.portfoy = [p for p in st.session_state.portfoy if p["Ad"] != hisse_kod]
-        st.warning(f"🗑️ {hisse_kod} silindi!")
         st.rerun()
     
     st.caption("Mevcut: " + ", ".join([f"{p['Ad']}({p['Lot']:.0f})" for p in st.session_state.portfoy]))
@@ -341,7 +340,7 @@ else:
 st.markdown("---")
 st.subheader("📋 Portföy Detay")
 
-for p in st.session_state.portfoy:
+for i, p in enumerate(st.session_state.portfoy):
     kz_renk = "#22ab94" if p.get('K/Z', 0) >= 0 else "#f23645"
     emoji = "🔴" if p in sinyaller_zarar else "🟢" if p in sinyaller_kar else "⚪"
     sinif = "sinyal-zarar" if p in sinyaller_zarar else "sinyal-kar" if p in sinyaller_kar else "sinyal-normal"
@@ -356,7 +355,7 @@ for p in st.session_state.portfoy:
             hacim = f"{hacim/1_000:.0f}B"
     
     st.markdown(f"""
-    <div class="tv-panel {sinif}" style="margin-bottom:6px;">
+    <div class="tv-panel {sinif}" style="margin-bottom:6px;" id="hisse_{i}">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
             <span style="color:#d1d4dc;font-weight:600;width:55px;">{emoji} {p['Ad']}</span>
             <span style="color:#787b86;font-size:11px;width:50px;">{p['Lot']:.0f} lot</span>
@@ -367,12 +366,19 @@ for p in st.session_state.portfoy:
             <span style="color:#787b86;font-size:10px;width:55px;">F/K:{p.get('F/K','-')}</span>
             <span style="color:#787b86;font-size:10px;">PD/DD:{p.get('PD/DD','-')}</span>
         </div>
-        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
             <span style="color:#787b86;font-size:10px;">📊 52H: {p.get('52H Dip','-')} - {p.get('52H Zirve','-')} | Konum: {p.get('Konum','-')}</span>
             <span style="color:#787b86;font-size:10px;">📈 Günlük: %{p.get('Değişim',0):+.1f} | Hacim: {hacim} | Beta: {p.get('Beta','-')}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
+    
+    # Sil butonu (NAKİT hariç)
+    if p["Ad"] != "NAKİT":
+        if st.button(f"🗑️ {p['Ad']} portföyden kaldır", key=f"sil_{i}"):
+            st.session_state.portfoy = [x for x in st.session_state.portfoy if x["Ad"] != p["Ad"]]
+            st.warning(f"🗑️ {p['Ad']} portföyden kaldırıldı!")
+            st.rerun()
 
 # ============================================
 # PİYASA ETKİ ANALİZİ
@@ -384,9 +390,9 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     if altin["Ons Değişim"] > 1:
-        altin_yorum = "🟡 Altın yükseliyor → Risk iştahı azalabilir, banka hisseleri baskılanabilir."
+        altin_yorum = "🟡 Altın yükseliyor → Risk iştahı azalabilir."
     elif altin["Ons Değişim"] < -1:
-        altin_yorum = "🟢 Altın düşüyor → Risk iştahı artıyor, bankalar için olumlu."
+        altin_yorum = "🟢 Altın düşüyor → Risk iştahı artıyor."
     else:
         altin_yorum = "⚪ Altın yatay → Piyasa dengeli."
     
@@ -400,7 +406,7 @@ with col1:
 
 with col2:
     if petrol["Değişim"] > 2:
-        petrol_yorum = "🔴 Petrol yükseliyor → Enerji maliyetleri artar."
+        petrol_yorum = "🔴 Petrol yükseliyor → Maliyet artışı."
     elif petrol["Değişim"] < -2:
         petrol_yorum = "🟢 Petrol düşüyor → Maliyetler azalır."
     else:
@@ -416,13 +422,13 @@ with col2:
 
 with col3:
     if vix["Fiyat"] < 15:
-        vix_yorum = "🟢 Piyasa sakin → Hisseler için ideal ortam."
+        vix_yorum = "🟢 Piyasa sakin."
     elif vix["Fiyat"] < 25:
-        vix_yorum = "⚪ Normal seviye → Korku yok."
+        vix_yorum = "⚪ Normal seviye."
     elif vix["Fiyat"] < 35:
-        vix_yorum = "🟡 Piyasa tedirgin → Temkinli ol, stop-loss'ları kontrol et."
+        vix_yorum = "🟡 Tedirginlik var."
     else:
-        vix_yorum = "🔴 YÜKSEK KORKU → Nakitini artır, hisse alımını durdur!"
+        vix_yorum = "🔴 YÜKSEK KORKU!"
     
     st.markdown(f"""
     <div class="tv-panel">
@@ -432,11 +438,10 @@ with col3:
     </div>
     """, unsafe_allow_html=True)
 
-# VIX uyarısı
 if vix["Fiyat"] >= 35:
-    st.error("🚨 VIX 35 üzerinde! Piyasada korku hâkim. Yeni alım yapma, nakit oranını artır, stop-loss'ları sıkılaştır!")
+    st.error("🚨 VIX 35 üzerinde! Yeni alım yapma, nakit oranını artır!")
 elif vix["Fiyat"] >= 25:
-    st.warning("⚠️ VIX 25 üzerinde. Piyasa tedirgin. Stop-loss seviyelerini kontrol et.")
+    st.warning("⚠️ VIX 25 üzerinde. Stop-loss'ları kontrol et.")
 
 # ============================================
 # GÜN SONU RAPORU
@@ -467,10 +472,10 @@ if ts.hour >= 18:
     </div>
     """, unsafe_allow_html=True)
     
-    kazanan = max([p for p in st.session_state.portfoy if p['Ad'] != 'NAKİT'], key=lambda x: x.get('Değişim', 0)) if len([p for p in st.session_state.portfoy if p['Ad'] != 'NAKİT']) > 0 else None
-    kaybeden = min([p for p in st.session_state.portfoy if p['Ad'] != 'NAKİT'], key=lambda x: x.get('Değişim', 0)) if len([p for p in st.session_state.portfoy if p['Ad'] != 'NAKİT']) > 0 else None
-    
-    if kazanan and kaybeden:
+    hisseler = [p for p in st.session_state.portfoy if p['Ad'] != 'NAKİT']
+    if hisseler:
+        kazanan = max(hisseler, key=lambda x: x.get('Değişim', 0))
+        kaybeden = min(hisseler, key=lambda x: x.get('Değişim', 0))
         st.markdown(f"""
         <div class="tv-panel">
             <div style="display:flex;justify-content:space-between;">

@@ -522,4 +522,58 @@ with tab3:
     st.markdown("---")
     st.subheader("🤖 DeepSeek'e Gönder")
     
-    ds_metin = f"BIST: {bist:,} | USD: {usd:.2f} | Alt
+    ds_metin = f"BIST: {bist:,} | USD: {usd:.2f} | Altın: {altin['Gram']:,.0f} TL/g | Petrol: ${petrol['Fiyat']:,.1f} | VIX: {vix['Fiyat']:.1f} ({vix_seviye})\n"
+    for p in st.session_state.portfoy:
+        if p["Ad"] != "NAKİT":
+            ds_metin += f"{p['Ad']}: Lot={p['Lot']:.0f} Alış={p['Alış']:.2f} Güncel={p['Güncel']:.2f} K/Z=%{p.get('K/Z %',0):+.1f} F/K={p.get('F/K','-')} PD/DD={p.get('PD/DD','-')} Günlük=%{p.get('Değişim',0):+.1f} Beta={p.get('Beta','-')} 52H={p.get('52H Dip','-')}-{p.get('52H Zirve','-')} Konum={p.get('Konum','-')} Hedef={p.get('Hedef','-')}\n"
+        else:
+            ds_metin += f"{p['Ad']}: {p['Lot']:,.0f} TL\n"
+    
+    st.code(ds_metin, language="")
+    
+    st.components.v1.html(f"""
+        <textarea id="dsText" style="display:none;">{ds_metin}</textarea>
+        <button onclick="var t=document.getElementById('dsText');t.style.display='block';t.select();navigator.clipboard.writeText(t.value);t.style.display='none';"
+        style="width:100%;padding:10px;background:#2962ff;color:white;border:none;border-radius:4px;font-size:14px;font-weight:500;cursor:pointer;">📋 PANOYA KOPYALA</button>
+    """, height=50)
+    
+    st.caption("👆 Tıkla, DeepSeek sohbetine yapıştır (Ctrl+V)")
+
+# ============================================
+# PİYASA ETKİ ANALİZİ
+# ============================================
+st.markdown("---")
+st.subheader("🌍 Piyasa Etki Analizi")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    if altin["Ons Değişim"] > 1:
+        altin_yorum = "🟡 Altın yükseliyor → Risk iştahı azalabilir."
+    elif altin["Ons Değişim"] < -1:
+        altin_yorum = "🟢 Altın düşüyor → Risk iştahı artıyor."
+    else:
+        altin_yorum = "⚪ Altın yatay."
+    
+    st.markdown(f"""<div class="tv-panel"><div style="color:#ff9800;font-weight:600;">🥇 Altın</div><div style="color:#d1d4dc;">{altin['Gram']:,.0f} TL/g | %{altin['Ons Değişim']:+.1f}</div><div style="color:#787b86;font-size:12px;">{altin_yorum}</div></div>""", unsafe_allow_html=True)
+
+with col2:
+    if petrol["Değişim"] > 2:
+        petrol_yorum = "🔴 Petrol yükseliyor."
+    elif petrol["Değişim"] < -2:
+        petrol_yorum = "🟢 Petrol düşüyor."
+    else:
+        petrol_yorum = "⚪ Petrol yatay."
+    
+    st.markdown(f"""<div class="tv-panel"><div style="color:#ff9800;font-weight:600;">🛢️ Petrol</div><div style="color:#d1d4dc;">${petrol['Fiyat']:,.1f} | %{petrol['Değişim']:+.1f}</div><div style="color:#787b86;font-size:12px;">{petrol_yorum}</div></div>""", unsafe_allow_html=True)
+
+with col3:
+    st.markdown(f"""<div class="tv-panel"><div style="color:#ff9800;font-weight:600;">😱 VIX</div><div style="color:#d1d4dc;">{vix['Fiyat']:.1f} ({vix_seviye})</div><div style="color:#787b86;font-size:12px;">{vix_yorum if 'vix_yorum' in dir() else 'Piyasa normal.'}</div></div>""", unsafe_allow_html=True)
+
+if vix["Fiyat"] >= 35:
+    st.error("🚨 VIX 35 üzerinde! Yeni alım yapma!")
+elif vix["Fiyat"] >= 25:
+    st.warning("⚠️ VIX 25 üzerinde. Stop-loss'ları kontrol et.")
+
+st.markdown("---")
+st.caption("⚠️ Yatırım tavsiyesi değildir.")

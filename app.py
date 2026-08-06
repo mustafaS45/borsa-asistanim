@@ -434,10 +434,9 @@ with tab2:
         with st.spinner("Taranıyor... 1-2 dakika sürebilir"):
             df = bist100_tara()
             
-            # Sayısal F/K ve PD/DD filtreleme için dönüştür
-            df_num = df.copy()
-            df_num["F/K_num"] = pd.to_numeric(df_num["F/K"], errors='coerce')
-            df_num["PD/DD_num"] = pd.to_numeric(df_num["PD/DD"], errors='coerce')
+            # Sayısal dönüştürme
+            df["F/K_num"] = pd.to_numeric(df["F/K"], errors='coerce')
+            df["PD/DD_num"] = pd.to_numeric(df["PD/DD"], errors='coerce')
             
             st.success(f"✅ {len(df)} hisse tarandı")
             
@@ -445,7 +444,7 @@ with tab2:
             col1, col2, col3, col4 = st.columns(4)
             
             with col1:
-                en_ucuz_fk = df_num[df_num["F/K_num"] > 0].nsmallest(1, "F/K_num")
+                en_ucuz_fk = df[df["F/K_num"] > 0].nsmallest(1, "F/K_num")
                 if len(en_ucuz_fk) > 0:
                     st.markdown(f"""<div class="tv-panel" style="text-align:center;">
                         <div style="color:#787b86;font-size:11px;">EN DÜŞÜK F/K</div>
@@ -454,7 +453,7 @@ with tab2:
                     </div>""", unsafe_allow_html=True)
             
             with col2:
-                en_ucuz_pddd = df_num[df_num["PD/DD_num"] > 0].nsmallest(1, "PD/DD_num")
+                en_ucuz_pddd = df[df["PD/DD_num"] > 0].nsmallest(1, "PD/DD_num")
                 if len(en_ucuz_pddd) > 0:
                     st.markdown(f"""<div class="tv-panel" style="text-align:center;">
                         <div style="color:#787b86;font-size:11px;">EN DÜŞÜK PD/DD</div>
@@ -492,15 +491,17 @@ with tab2:
                 sec = st.selectbox("Sektör", ["Tümü", "Bankalar", "Sanayi", "Holding", "Telekom"])
             
             # Filtrele
-            filtreli = df_num[(df_num["F/K_num"] > 0) & (df_num["F/K_num"] <= fk_max) & 
-                              (df_num["PD/DD_num"] > 0) & (df_num["PD/DD_num"] <= pddd_max)]
+            filtreli = df[(df["F/K_num"] > 0) & (df["F/K_num"] <= fk_max) & 
+                          (df["PD/DD_num"] > 0) & (df["PD/DD_num"] <= pddd_max)].copy()
             
             if sec == "Bankalar":
                 bankalar = ["AKBNK", "GARAN", "HALKB", "ISCTR", "SKBNK", "TSKB", "VAKBN", "YKBNK", "ALBRK"]
                 filtreli = filtreli[filtreli["Hisse"].isin(bankalar)]
             
+            filtreli = filtreli.sort_values("F/K_num")
+            
             st.markdown(f"**🎯 F/K ≤ {fk_max}, PD/DD ≤ {pddd_max} → {len(filtreli)} hisse bulundu**")
-            st.dataframe(filtreli[["Hisse", "Fiyat", "F/K", "PD/DD", "Değişim"]].sort_values("F/K_num"), 
+            st.dataframe(filtreli[["Hisse", "Fiyat", "F/K", "PD/DD", "Değişim"]], 
                          use_container_width=True, hide_index=True)
             
             # DeepSeek için
